@@ -1,8 +1,8 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 1.1 — Backend scaffold, RESET to single-project layout (instructions re-issued 2026-10-20; awaiting user execution)**
-Phase 0 — COMPLETE.
+**Phase 1.2 — Frontend scaffold (instructions issued 2026-10-20; awaiting user execution)**
+Phase 0 — COMPLETE. Phase 1.1 — advanced by user without reporting build output (treat as UNVERIFIED; re-run `dotnet build` in `backend/` if anything fails later).
 
 ## Completed work
 - Inspected workspace: `D:\DevTaskHub` was empty; git not initialized.
@@ -38,4 +38,4 @@ All succeeded.
 - Concurrency control (rowversion) deferred until measured need.
 
 ## Next permitted action
-User executes the revised **Phase 1.1** (delete old scaffold; `git init`; `dotnet new sln -n DevTaskHub`; `dotnet new webapi -n DevTaskHub.Api -o DevTaskHub.Api -f net10.0`; `dotnet sln add`; `dotnet build`), reports build output, then types `next` → **Phase 1.2**: React + TypeScript + Vite scaffold in `frontend/`.
+User executes Phase 1.2 (`npm create vite@latest frontend -- --template react-ts`, `npm install`, `npm run build`), reports output, then types `next` → **Phase 1.3**: run backend and frontend side by side and confirm they start independently.
