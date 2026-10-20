@@ -34,7 +34,8 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 
 ## Git state
 - Branch: **`day1-developing`** (created 2026-10-20 from `main` @ b3fa65d) — all Day-1 work lives here.
-- Day-1 commits on this branch: Phase 2.1 Domain entities + this progress record.
+- Day-1 work on this branch: **commit `80bce18` — "feat(domain): entities and enums (day 1)"** (10 files: 9 Domain entities/enums + progress doc). Build verified green.
+- **Caution (2026-10-20):** an OLD repo exists at `D:\DevTaskHub` with a similarly-named branch `day1-development` (−ment) already on GitHub — do NOT work there. Canonical repo: `D:\Assignment\DevTask-Hub`, branch `day1-developing` (−ing). User advised to push new branch and abandon old repo.
 - `main` stays clean/stable at Phase 1; merge `day1-developing` → `main` when a day's work is verified.
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
