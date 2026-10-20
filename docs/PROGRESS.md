@@ -1,41 +1,39 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 1.2 — Frontend scaffold (instructions issued 2026-10-20; awaiting user execution)**
-Phase 0 — COMPLETE. Phase 1.1 — advanced by user without reporting build output (treat as UNVERIFIED; re-run `dotnet build` in `backend/` if anything fails later).
+**Phase 1 — COMPLETE (closing commit pending user run).**
+Phases 1.1–1.3 advanced by user without pasted verification output; scaffolds confirmed present on disk 2026-10-20 (`backend/DevTaskHub.Api`, `frontend/` Vite app, root `.gitignore`, git repo with 2 prior commits). Treat runtime behavior as UNVERIFIED until re-checked.
 
 ## Completed work
-- Inspected workspace: `D:\DevTaskHub` was empty; git not initialized.
-- Verified installed tools:
-  - .NET SDK 10.0.401 (target net10.0, LTS)
-  - dotnet-ef 10.0.11 (global tool)
-  - Node.js v24.20.0, npm 11.19.0 (registry reachable)
-  - Git 2.55.0.windows.5
-  - SQL Server 2025 Express, instance `localhost\SQLEXPRESS`, service running, connection verified via sqlcmd
-- Decided architecture, database schema (7 tables + RefreshTokens), API/UI/security plans.
-- Approved refresh-token strategy: rotation + httpOnly cookie + reuse detection.
-- **Structure revised (user decision):** single `DevTaskHub.Api` project with folder-based layering replaces the 4-project split. `ARCHITECTURE.md` and `PROJECT_PLAN.md` updated.
-- User began the 4-project scaffold (solution + projects created) but chose to collapse to one project; that layout is being replaced.
+- Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
+- Refresh-token strategy approved (rotation, hashed storage, httpOnly cookie, reuse detection).
+- Structure revised to a **single Web API project** with folder-based layering (user decision); docs updated accordingly.
+- Phase 1.1: git repo + `backend/DevTaskHub.slnx` + `DevTaskHub.Api` project exist on disk.
+- Phase 1.2: `frontend/` React + TS + Vite scaffold exists (build artifacts in `dist/` indicate a build was run).
+- Phase 1.3: runtime checks issued; results not reported by user.
+- Phase 1.4: root `README.md` created.
 
-## Files created
-- `docs/PROJECT_PLAN.md`, `docs/ARCHITECTURE.md`, `docs/DATABASE_DESIGN.md`
-- `docs/API_CONTRACTS.md`, `docs/UI_PLAN.md`, `docs/SECURITY.md`, `docs/PROGRESS.md`
+## Files created/modified (by assistant, docs only)
+- `docs/*.md` (7 planning documents)
+- `README.md` (root, minimal)
 
-## Commands performed (inspection only)
+## Commands performed (by assistant: inspection only)
 ```
-dotnet --list-sdks
-dotnet tool list -g
-node --version && npm --version && git --version
-sqlcmd -S localhost\SQLEXPRESS -Q "SELECT @@VERSION"
-npm view vite version && npm view react version
+dotnet --list-sdks · node/npm/git versions · sqlcmd @@VERSION  (Phase 0)
+Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 ```
-All succeeded.
 
 ## Known issues / open items
-- Old 4-project scaffold under `backend/` must be deleted before re-running Phase 1.1.
-- Git repository not initialized yet.
-- GitHub rate-limit strategy to be implemented in Phase 10.
-- Concurrency control (rowversion) deferred until measured need.
+- Phase 1.1–1.3 lack user-reported verification output; if anything fails in Phase 2, re-run: `dotnet build` (backend), `npm run build` (frontend), `dotnet run` + `npm run dev`.
+- Solution file is `DevTaskHub.slnx` (new .NET XML solution format) rather than `.sln`; harmless — keep using it as-is.
+- `frontend/README.md` is the Vite template default; root `README.md` is the real one.
+- GitHub rate-limit strategy deferred to Phase 10; concurrency (rowversion) deferred until measured need.
+
+## Git state
+- Repo initialized; user has made 2 commits labeled "first commit".
+- Uncommitted at time of writing: `docs/PROGRESS.md` (phase updates) + new `README.md`.
+- Suggested commit message:
+  `docs: close phase 1 — root readme and progress update`
 
 ## Next permitted action
-User executes Phase 1.2 (`npm create vite@latest frontend -- --template react-ts`, `npm install`, `npm run build`), reports output, then types `next` → **Phase 1.3**: run backend and frontend side by side and confirm they start independently.
+User commits Phase 1.4 files, then types `next` → **Phase 2.1**: Domain entities (`User`, `Project`, `ProjectMember`, `Task`, `GitHubAccount`, `TaskPullRequest`, `TaskActivityLog`, `RefreshToken`) + enums + `AppDbContext` — hand-typed per assistant instructions.
