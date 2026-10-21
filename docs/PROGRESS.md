@@ -1,12 +1,14 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 2.3 — First migration + apply + schema inspection: INSTRUCTIONS ISSUED 2026-10-20 (awaiting user execution).**
-**Phase 2.2 — COMPLETE, independently verified:** `AppDbContext.cs` (184 lines) present, EF Core 10.0.13 packages installed (incl. Design), `dotnet build` → 0 errors (4 NuGet vulnerability warnings on transitive `System.Security.Cryptography.Pkcs 9.0.11` — deferred to Phase 12 security review). Committed `65434ea`.
-**Phase 2.1 — COMPLETE, independently verified** (build 0/0; commits `80bce18`, `23dc24f`).
+**Phase 3.1 — Auth foundation (register/login + password hashing): INSTRUCTIONS ISSUED 2026-10-21.**
+**Phase 2 — COMPLETE, independently verified by assistant 2026-10-21:**
+- 2.3: `DevTaskHubDb` created on `localhost\SQLEXPRESS`; 9 tables + `__EFMigrationsHistory` confirmed via sqlcmd; migration `20261021072525_2_initialSchema` present; seed admin row exists (`admin@devtaskhub.com`, Admin); user-secrets connection string confirmed; `Tasks` column types match design (string enums as nvarchar).
+- User change approved: `TaskActivityLogs→Projects` FK is NoAction (avoids SQL Server multiple-cascade-path error); design doc updated.
+- **Uncommitted:** `Migrations/`, `AppDbContext.cs` NoAction edit, plus this doc — user to commit.
 **Work isolated on branch `day1-developing`.**
 **Repository at `D:\Assignment\DevTask-Hub` (canonical path).**
-Phase 0 — COMPLETE. Phase 1 — COMPLETE.
+Phase 0 — COMPLETE. Phase 1 — COMPLETE. Phase 2 — COMPLETE (verified).
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -42,4 +44,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User completes Phase 2.3 (user-secrets connection string, Program.cs DbContext registration, `dotnet ef migrations add 2_InitialSchema`, `dotnet ef database update`, sqlcmd schema check), reports results, then types `next` → **Phase 3.1**: auth foundation — password hashing, register/login DTOs and service, JWT configuration groundwork.
+User completes Phase 3.1 (Identity.Core package, `Dtos\AuthDtos.cs`, `Services\IAuthService.cs`, `Services\AuthService.cs`, `Controllers\AuthController.cs`, Program.cs wiring, curl tests of register/login), reports results, then types `next` → **Phase 3.2**: JWT token service, refresh-token rotation, `/api/auth/me`, role policies, real admin seeding from user-secrets.

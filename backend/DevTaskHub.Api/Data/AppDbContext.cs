@@ -146,14 +146,17 @@ public class AppDbContext : DbContext
             e.Property(x => x.Note).HasMaxLength(1000);
             e.HasIndex(x => new { x.TaskId, x.CreatedAtUtc });
             e.HasIndex(x => new { x.ProjectId, x.CreatedAtUtc });
+
             e.HasOne(x => x.Task)
              .WithMany(t => t.ActivityLogs)
              .HasForeignKey(x => x.TaskId)
              .OnDelete(DeleteBehavior.Cascade);
+
             e.HasOne(x => x.Project)
              .WithMany()
              .HasForeignKey(x => x.ProjectId)
-             .OnDelete(DeleteBehavior.Cascade);
+             .OnDelete(DeleteBehavior.NoAction);
+           
             e.HasOne(x => x.Actor)
              .WithMany()
              .HasForeignKey(x => x.ActorUserId)
