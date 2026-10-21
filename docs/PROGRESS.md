@@ -1,8 +1,10 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 1 — COMPLETE (closing commit pending user run).**
-Phases 1.1–1.3 advanced by user without pasted verification output; scaffolds confirmed present on disk 2026-10-20 (`backend/DevTaskHub.Api`, `frontend/` Vite app, root `.gitignore`, git repo with 2 prior commits). Treat runtime behavior as UNVERIFIED until re-checked.
+**Phase 2.1 — Domain entities and enums: COMPLETE (build succeeded 0 errors, 2026-10-20 after user fixed casing/typo bugs).**
+**Work isolated on branch `day1-developing`.**
+**Repository at `D:\Assignment\DevTask-Hub` (canonical path).**
+Phase 0 — COMPLETE. Phase 1 — COMPLETE.
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -28,12 +30,14 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Solution file is `DevTaskHub.slnx` (new .NET XML solution format) rather than `.sln`; harmless — keep using it as-is.
 - `frontend/README.md` is the Vite template default; root `README.md` is the real one.
 - GitHub rate-limit strategy deferred to Phase 10; concurrency (rowversion) deferred until measured need.
+- ~~Phase 2.1 build failures~~ — FIXED by user (casing: GitHub* enums, `User.Id`, `GitHubAccount` navigation); verified by assistant: `dotnet build` → 0 errors.
 
 ## Git state
-- Repo initialized; user has made 2 commits labeled "first commit".
-- Uncommitted at time of writing: `docs/PROGRESS.md` (phase updates) + new `README.md`.
-- Suggested commit message:
-  `docs: close phase 1 — root readme and progress update`
+- Branch: **`day1-developing`** (created 2026-10-20 from `main` @ b3fa65d) — all Day-1 work lives here.
+- Day-1 work on this branch: **commit `80bce18` — "feat(domain): entities and enums (day 1)"** (10 files: 9 Domain entities/enums + progress doc). Build verified green.
+- **Caution (2026-10-20):** an OLD repo exists at `D:\DevTaskHub` with a similarly-named branch `day1-development` (−ment) already on GitHub — do NOT work there. Canonical repo: `D:\Assignment\DevTask-Hub`, branch `day1-developing` (−ing). User advised to push new branch and abandon old repo.
+- `main` stays clean/stable at Phase 1; merge `day1-developing` → `main` when a day's work is verified.
+- Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User commits Phase 1.4 files, then types `next` → **Phase 2.1**: Domain entities (`User`, `Project`, `ProjectMember`, `Task`, `GitHubAccount`, `TaskPullRequest`, `TaskActivityLog`, `RefreshToken`) + enums + `AppDbContext` — hand-typed per assistant instructions.
+User types `next` → **Phase 2.2**: `AppDbContext` + EF configurations (table names, enums-as-strings, unique constraints, indexes, delete behaviors) + EF Core NuGet packages — committed on `day1-developing`.
