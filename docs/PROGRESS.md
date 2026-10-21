@@ -1,7 +1,8 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 2.1 — Domain entities and enums: COMPLETE (build succeeded 0 errors, 2026-10-20 after user fixed casing/typo bugs).**
+**Phase 2.2 — AppDbContext + EF configuration: INSTRUCTIONS ISSUED 2026-10-20 (awaiting user typing + build).**
+**Phase 2.1 — COMPLETE, independently verified:** assistant ran `dotnet build` → `0 Warning(s) 0 Error(s)` (2026-10-20); second commit `23dc24f` also present.
 **Work isolated on branch `day1-developing`.**
 **Repository at `D:\Assignment\DevTask-Hub` (canonical path).**
 Phase 0 — COMPLETE. Phase 1 — COMPLETE.
@@ -40,4 +41,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User types `next` → **Phase 2.2**: `AppDbContext` + EF configurations (table names, enums-as-strings, unique constraints, indexes, delete behaviors) + EF Core NuGet packages — committed on `day1-developing`.
+User types the 2.2 files (`dotnet add package` × 2, `Data\AppDbContext.cs`), runs `dotnet build`, reports result, then types `next` → **Phase 2.3**: first EF migration (`dotnet ef migrations add 2_InitialSchema`), apply to local `DevTaskHubDb`, and inspect the generated schema together.
