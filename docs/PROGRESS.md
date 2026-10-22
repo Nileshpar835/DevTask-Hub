@@ -1,11 +1,8 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 3.1 — Auth foundation (register/login + password hashing): INSTRUCTIONS ISSUED 2026-10-21.**
-**Phase 2 — COMPLETE, independently verified by assistant 2026-10-21:**
-- 2.3: `DevTaskHubDb` created on `localhost\SQLEXPRESS`; 9 tables + `__EFMigrationsHistory` confirmed via sqlcmd; migration `20261021072525_2_initialSchema` present; seed admin row exists (`admin@devtaskhub.com`, Admin); user-secrets connection string confirmed; `Tasks` column types match design (string enums as nvarchar).
-- User change approved: `TaskActivityLogs→Projects` FK is NoAction (avoids SQL Server multiple-cascade-path error); design doc updated.
-- **Uncommitted:** `Migrations/`, `AppDbContext.cs` NoAction edit, plus this doc — user to commit.
+**Phase 3.2 — JWT + refresh rotation + /me + secure admin seed: INSTRUCTIONS ISSUED 2026-10-21.**
+**Phase 3.1 — COMPLETE (verified by assistant 2026-10-21):** all 4 auth files present, Identity.Core installed, Swagger added by user; register/login proven working (`user@example.com` has genuine PBKDF2 hash in DB). Issues found: (a) seed admin `PasswordHash = "Nilesh"` = plaintext in source — admin login broken + secret committed; FIXED in 3.2 by runtime seeding from user-secrets + migration `3_RemovePlaceholderAdminSeed`. (b) DTO used lowercase `password`/`Fullname` — works via case-insensitive JSON binding; corrected in 3.2 DTO rewrite. (c) build "failures" were file locks from the running API process (stop before rebuild).
 **Work isolated on branch `day1-developing`.**
 **Repository at `D:\Assignment\DevTask-Hub` (canonical path).**
 Phase 0 — COMPLETE. Phase 1 — COMPLETE. Phase 2 — COMPLETE (verified).
@@ -30,6 +27,7 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 ```
 
 ## Known issues / open items
+- **3.2 incident (2026-10-22):** login returned 500 — `LoginRequest`/`RegisterRequest` had validation attributes with explicit `property:` targets (from assistant's 3.2 instructions), which .NET 10 MVC rejects for record types ("validation metadata must be associated with the constructor parameter"). Fix instructed: remove `property:` from all 5 attribute lists in `AuthDtos.cs` (untargeted = constructor parameter, which MVC validates). Awaiting user manual edit + retest.
 - Phase 1.1–1.3 lack user-reported verification output; if anything fails in Phase 2, re-run: `dotnet build` (backend), `npm run build` (frontend), `dotnet run` + `npm run dev`.
 - Solution file is `DevTaskHub.slnx` (new .NET XML solution format) rather than `.sln`; harmless — keep using it as-is.
 - `frontend/README.md` is the Vite template default; root `README.md` is the real one.
@@ -44,4 +42,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User completes Phase 3.1 (Identity.Core package, `Dtos\AuthDtos.cs`, `Services\IAuthService.cs`, `Services\AuthService.cs`, `Controllers\AuthController.cs`, Program.cs wiring, curl tests of register/login), reports results, then types `next` → **Phase 3.2**: JWT token service, refresh-token rotation, `/api/auth/me`, role policies, real admin seeding from user-secrets.
+User completes Phase 3.2 (Jwt:Key + seed secrets, JwtBearer package, TokenService/AuthDtos/IAuthService/AuthService/AuthController rewrites, DbSeeder, AppDbContext seed removal, Program.cs auth pipeline, migration 3 + database update, end-to-end test: login → /me → refresh → logout), reports results, then types `next` → **Phase 3.3**: Swagger UI auth testing (bearer scheme), role-policy demonstration, and closing summary of Phase 3.
