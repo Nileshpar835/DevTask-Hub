@@ -1,10 +1,14 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 2.1 — Domain entities and enums: COMPLETE (build succeeded 0 errors, 2026-10-20 after user fixed casing/typo bugs).**
+**Phase 3.1 — Auth foundation (register/login + password hashing): INSTRUCTIONS ISSUED 2026-10-21.**
+**Phase 2 — COMPLETE, independently verified by assistant 2026-10-21:**
+- 2.3: `DevTaskHubDb` created on `localhost\SQLEXPRESS`; 9 tables + `__EFMigrationsHistory` confirmed via sqlcmd; migration `20261021072525_2_initialSchema` present; seed admin row exists (`admin@devtaskhub.com`, Admin); user-secrets connection string confirmed; `Tasks` column types match design (string enums as nvarchar).
+- User change approved: `TaskActivityLogs→Projects` FK is NoAction (avoids SQL Server multiple-cascade-path error); design doc updated.
+- **Uncommitted:** `Migrations/`, `AppDbContext.cs` NoAction edit, plus this doc — user to commit.
 **Work isolated on branch `day1-developing`.**
 **Repository at `D:\Assignment\DevTask-Hub` (canonical path).**
-Phase 0 — COMPLETE. Phase 1 — COMPLETE.
+Phase 0 — COMPLETE. Phase 1 — COMPLETE. Phase 2 — COMPLETE (verified).
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -40,4 +44,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User types `next` → **Phase 2.2**: `AppDbContext` + EF configurations (table names, enums-as-strings, unique constraints, indexes, delete behaviors) + EF Core NuGet packages — committed on `day1-developing`.
+User completes Phase 3.1 (Identity.Core package, `Dtos\AuthDtos.cs`, `Services\IAuthService.cs`, `Services\AuthService.cs`, `Controllers\AuthController.cs`, Program.cs wiring, curl tests of register/login), reports results, then types `next` → **Phase 3.2**: JWT token service, refresh-token rotation, `/api/auth/me`, role policies, real admin seeding from user-secrets.

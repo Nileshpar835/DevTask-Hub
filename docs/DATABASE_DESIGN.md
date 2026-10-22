@@ -114,7 +114,7 @@ Database name (local): **DevTaskHubDb** on `localhost\SQLEXPRESS` (connection st
 |---|---|---|
 | Id | int IDENTITY PK | |
 | TaskId | int NOT NULL FK → Tasks | ON DELETE CASCADE |
-| ProjectId | int NOT NULL FK → Projects | ON DELETE CASCADE — denormalized so project-activity dashboards don't join through Tasks; justified because admin "recent project activity" reads it directly |
+| ProjectId | int NOT NULL FK → Projects | ON DELETE **NoAction** (revised 2026-10-21: SQL Server forbids the multiple cascade path `Projects→Tasks→ActivityLogs` + `Projects→ActivityLogs`; logs are still removed via the TaskId cascade when the task/project is deleted) |
 | ActorUserId | int NOT NULL FK → Users | RESTRICT |
 | Action | nvarchar(50) NOT NULL | Created \| StatusChanged \| Assigned \| Unassigned \| TitleEdited \| DescriptionEdited \| PriorityChanged \| DueDateChanged \| PullRequestLinked \| PullRequestUnlinked \| Reopened |
 | OldValue / NewValue | nvarchar(200) NULL | e.g. status before/after |
