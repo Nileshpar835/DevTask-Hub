@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
+builder.Services.AddSwaggerGen();
 
 var connectionString = builder.Configuration.GetConnectionString("DevTaskHub")
     ?? throw new InvalidOperationException("Connection string 'DevTaskHub' not found.");
@@ -23,6 +24,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.MapControllers();
