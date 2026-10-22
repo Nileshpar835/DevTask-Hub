@@ -37,7 +37,7 @@ public class TokenService : ITokenService
     };
 
         var token = new JwtSecurityToken(
-            issuer: _config["Jwr:Issuer"],
+            issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: claims,
             expires: expires,
