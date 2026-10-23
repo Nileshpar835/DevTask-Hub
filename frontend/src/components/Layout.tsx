@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 
 // Role-aware filtering (hiding "Users" from non-admins) arrives in 4.3.
 const NAV_ITEMS = [
@@ -29,6 +30,7 @@ function titleFor(path: string): string {
 export default function Layout() {
     const [open, setOpen] = useState(false);
     const { pathname } = useLocation();
+    const { user, logout } = useAuth();
 
     return (
         <div className={`app${open ? " nav-open" : ""}`}>
@@ -47,7 +49,17 @@ export default function Layout() {
                         </NavLink>
                     ))}
                 </nav>
-                <div className="user-chip">Not signed in</div>
+                <div className="user-chip">
+                    {user ? (
+                        <>
+                            <div>{user.fullname}</div>
+                            <div className="user-role">{user.role}</div>
+                            <button type="button" onClick={() => void logout()}>Sign Out</button>
+                        </>
+                    ) : (
+                        "Not signed in"
+                    )}
+                </div>
             </aside>
 
             <div className="main">
@@ -56,7 +68,7 @@ export default function Layout() {
                         ☰
                     </button>
                     <h1 className="page-title">{titleFor(pathname)}</h1>
-                    <div className="avatar" aria-hidden="true">?</div>
+                    <div className="avatar" aria-hidden="true">{user ? user.fullname.charAt(0).toUpperCase() : "?"}</div>
                 </header>
                 <main className="content">
                     <Outlet />
