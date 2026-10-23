@@ -1,9 +1,10 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 3.2 — CLOSED (verified by assistant 2026-10-23, all 4 gates + refresh reuse-detection passed against live API :5109).**
-**Phase 3.3 — INSTRUCTIONS ISSUED 2026-10-23:** Swagger "Authorize" button (`AddSecurityDefinition`/`AddSecurityRequirement`), role-gated `GET /api/users` `[Authorize(Roles="Admin")]` demo, Phase 3 close-out.
-**Phase 3.1 — COMPLETE (verified 2026-10-21).** Work isolated on branch `day1-developing`; repository at `D:\Assignment\DevTask-Hub` (canonical). Phase 0–2 COMPLETE (verified).
+**Phase 3 — CLOSED 2026-10-23.** 3.1 ✅, 3.2 ✅ (all gates), 3.3 ✅ (assistant-verified: anon 401 / dev 403 / admin 200 + swagger.json securitySchemes).
+**Phase 4.1 — CLOSED 2026-10-23 (verified: `npm run build` green, commit `13d139a`).**
+**Phase 4.2 — INSTRUCTIONS ISSUED 2026-10-23:** CORS policy in Program.cs (browser→API was blocked — not configured anywhere), `npm install axios`, `src/api/client.ts` (bearer + 401 single-flight refresh + retry), `src/context/AuthContext.tsx` (token in memory, boot via refresh+`/me`, login/register/logout), Layout user chip wired to auth.
+**Phases 0–2 COMPLETE (verified).** Branch `day1-developing`, repo `D:\Assignment\DevTask-Hub`.
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -43,4 +44,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User types Phase 3.3 code (Swagger security config in `Program.cs`; new `Dtos/UserDtos.cs`, `Services/IUserService.cs`, `Services/UserService.cs`, `Controllers/UsersController.cs`; DI registration), runs the test matrix (anonymous 401 · dev 403 · admin 200 · Swagger Authorize button sends header), then types `next` → assistant verifies and, if all pass, closes Phase 3 → **Phase 4.1**: frontend foundation (layout, Axios client with bearer + 401 interceptor, auth context).
+User types Phase 4.2 (CORS in `Program.cs`, `api/client.ts`, `context/AuthContext.tsx`, AuthProvider wrap, Layout chip), runs the verification list, then types `next` → assistant verifies (build + CORS preflight headers + boot behavior) → **Phase 4.3**: login/register forms (controlled inputs, validation), protected routes, role-aware nav, error boundary — closes Phase 4.
