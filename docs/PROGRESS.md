@@ -1,14 +1,9 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 3.1 — Auth foundation (register/login + password hashing): INSTRUCTIONS ISSUED 2026-10-21.**
-**Phase 2 — COMPLETE, independently verified by assistant 2026-10-21:**
-- 2.3: `DevTaskHubDb` created on `localhost\SQLEXPRESS`; 9 tables + `__EFMigrationsHistory` confirmed via sqlcmd; migration `20261021072525_2_initialSchema` present; seed admin row exists (`admin@devtaskhub.com`, Admin); user-secrets connection string confirmed; `Tasks` column types match design (string enums as nvarchar).
-- User change approved: `TaskActivityLogs→Projects` FK is NoAction (avoids SQL Server multiple-cascade-path error); design doc updated.
-- **Uncommitted:** `Migrations/`, `AppDbContext.cs` NoAction edit, plus this doc — user to commit.
-**Work isolated on branch `day1-developing`.**
-**Repository at `D:\Assignment\DevTask-Hub` (canonical path).**
-Phase 0 — COMPLETE. Phase 1 — COMPLETE. Phase 2 — COMPLETE (verified).
+**Phase 3.2 — CLOSED (verified by assistant 2026-10-23, all 4 gates + refresh reuse-detection passed against live API :5109).**
+**Phase 3.3 — INSTRUCTIONS ISSUED 2026-10-23:** Swagger "Authorize" button (`AddSecurityDefinition`/`AddSecurityRequirement`), role-gated `GET /api/users` `[Authorize(Roles="Admin")]` demo, Phase 3 close-out.
+**Phase 3.1 — COMPLETE (verified 2026-10-21).** Work isolated on branch `day1-developing`; repository at `D:\Assignment\DevTask-Hub` (canonical). Phase 0–2 COMPLETE (verified).
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -30,6 +25,10 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 ```
 
 ## Known issues / open items
+- **3.2 CLOSED (2026-10-23, assistant-verified):** dev login → `/me` 200 (claims match); admin login 200/Role=Admin (row Id=4, real `AQAAAA...` hash); anonymous `/me` 401; short-password register 400; cookie cycle login→refresh→logout→refresh-401; rotated refresh-token replay → 401 (reuse detection works). Token payload verified: `iss=DevTaskHub`, `aud=DevTaskHub.Client`, role claim = `ClaimTypes.Role` long-URI (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role`) → `[Authorize(Roles=...)]` works with no extra config. Fix B landed via migration `5_DeleteSeedAdminRow`; migrations 3+4 remain harmless empty no-ops.
+- **3.3 API facts (researched against installed packages — do not use pre-2024 tutorials):** Swashbuckle 10.3.1 → Microsoft.OpenApi **2.12.0**: all types live in namespace `Microsoft.OpenApi` (`Microsoft.OpenApi.Models` is the dead 1.x namespace — old snippets will not compile). `AddSecurityDefinition(string, IOpenApiSecurityScheme)`; `AddSecurityRequirement` now takes `Func<OpenApiDocument, OpenApiSecurityRequirement>`; the requirement key is `new OpenApiSecuritySchemeReference(name, document)`. Canonical snippet source: Swashbuckle's own `docs/configure-and-customize-swaggergen.md` ("Bearer authentication").
+- Optional cosmetic leftovers in `TokenService.cs`: stray `using System.Runtime.Intrinsics.Arm;` (L3), `Jwt:key` casing (L26 — works via case-insensitive config), message typo "missiong".
+- `docs/CHECKLIST.md` = master tracker. NuGet advisory: transitive `System.Security.Cryptography.Pkcs 9.0.11` (deferred to Phase 12). Phase 1.3 runtime check never reported.
 - Phase 1.1–1.3 lack user-reported verification output; if anything fails in Phase 2, re-run: `dotnet build` (backend), `npm run build` (frontend), `dotnet run` + `npm run dev`.
 - Solution file is `DevTaskHub.slnx` (new .NET XML solution format) rather than `.sln`; harmless — keep using it as-is.
 - `frontend/README.md` is the Vite template default; root `README.md` is the real one.
@@ -44,4 +43,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User completes Phase 3.1 (Identity.Core package, `Dtos\AuthDtos.cs`, `Services\IAuthService.cs`, `Services\AuthService.cs`, `Controllers\AuthController.cs`, Program.cs wiring, curl tests of register/login), reports results, then types `next` → **Phase 3.2**: JWT token service, refresh-token rotation, `/api/auth/me`, role policies, real admin seeding from user-secrets.
+User types Phase 3.3 code (Swagger security config in `Program.cs`; new `Dtos/UserDtos.cs`, `Services/IUserService.cs`, `Services/UserService.cs`, `Controllers/UsersController.cs`; DI registration), runs the test matrix (anonymous 401 · dev 403 · admin 200 · Swagger Authorize button sends header), then types `next` → assistant verifies and, if all pass, closes Phase 3 → **Phase 4.1**: frontend foundation (layout, Axios client with bearer + 401 interceptor, auth context).

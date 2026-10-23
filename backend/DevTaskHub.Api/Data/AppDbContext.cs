@@ -20,7 +20,7 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         ApplyConfigurations(modelBuilder);
-        SeedInitialAdmin(modelBuilder);
+        
     }
 
     private static void ApplyConfigurations(ModelBuilder b)
@@ -182,19 +182,4 @@ public class AppDbContext : DbContext
         });
     }
 
-    private static void SeedInitialAdmin(ModelBuilder b)
-    {
-        // Placeholder seed — replaced in Phase 3 with a properly hashed password.
-        b.Entity<User>().HasData(new User
-        {
-            Id = 1,
-            Email = "admin@devtaskhub.com",
-            PasswordHash = "Nilesh",
-            FullName = "Initial Admin",
-            Role = UserRole.Admin,
-            IsActive = true,
-            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-        });
-    }
 }

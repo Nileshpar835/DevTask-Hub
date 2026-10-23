@@ -400,19 +400,6 @@ namespace DevTaskHub.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Users", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "admin@devtaskhub.com",
-                            FullName = "Initial Admin",
-                            IsActive = true,
-                            PasswordHash = "Nilesh",
-                            Role = "Admin",
-                            UpdatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("DevTaskHub.Api.Domain.GitHubAccount", b =>
