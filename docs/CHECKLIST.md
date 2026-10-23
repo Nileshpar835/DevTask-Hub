@@ -43,11 +43,11 @@
 
 ## Phase 4 — Frontend foundation & authentication 🔶 CURRENT
 - [x] App layout + sidebar/topbar nav — ✅ **4.1 verified 2026-10-23:** `npm run build` green (tsc+vite, 27 modules), commit `13d139a`; react-router-dom 7.18.4; eyeball pass (nav/404/hamburger) folded into 4.2 browser test
-- [ ] Axios client with bearer header + 401 interceptor — **4.2 ISSUED 2026-10-23** (includes **CORS policy in Program.cs** — was missing; browser calls from :5173 need it)
-- [ ] Auth context (access token in memory, `/me` hydration, logout)
-- [ ] Login & register forms (field validation, preserve input on error)
-- [ ] Protected routes + role-aware nav + 401/403 pages
-- [ ] Error boundary + API try/catch patterns (assignment Day-6 #19)
+- [x] Axios client with bearer header + 401 interceptor — ✅ **verified 2026-10-23:** CORS preflight `OPTIONS` → **204** + `allow-origin: http://localhost:5173` + `allow-credentials: true` (live API test); frontend build green; commits `661d810`/`cd6a94e`
+- [x] Auth context (access token in memory, `/me` hydration, logout) — ✅ verified: `AuthProvider` wraps app (App.tsx L13), boot via `/auth/refresh`+`/me`, single-flight refresh; commit `06bd025`. Browser session-restore/sign-out click-through folded into 4.3 test pass
+- [ ] Login & register forms (field validation, preserve input on error) — **4.3 ISSUED 2026-10-23**
+- [ ] Protected routes + role-aware nav + 401/403 pages — **4.3 ISSUED 2026-10-23**
+- [ ] Error boundary + API try/catch patterns (assignment Day-6 #19) — **4.3 ISSUED 2026-10-23**
 
 ## Phase 5 — Project management API ⬜
 - [ ] Global exception middleware + structured logging (assignment Day-3 #8 — backend plumbing, before CRUD)
@@ -107,12 +107,11 @@
 
 ---
 
-## Current task (Phase 4.2 — Axios client + AuthContext)
-1. Backend: `Program.cs` CORS policy `Frontend` (`WithOrigins("http://localhost:5173")` + `AllowCredentials()`) + `app.UseCors("Frontend")` before auth
-2. `npm install axios` → new `src/api/client.ts` (bearer request interceptor, 401→single-flight refresh→retry response interceptor) + `src/context/AuthContext.tsx` (token in memory, boot via `/auth/refresh`+`/auth/me`, login/register/logout)
-3. Wrap app in `AuthProvider` (App.tsx); Layout user chip shows real user + Sign out
-4. Verify: `npm run build` green · CORS preflight headers · browser boot behavior · Swagger-cookie trick restores session
-5. Then `next` → assistant verifies → Phase 4.3 (forms, protected routes, error boundary)
+## Current task (Phase 4.3 — forms, guards, error boundary; closes Phase 4)
+1. New: `pages/Login.tsx`, `pages/Register.tsx`, `components/Guards.tsx` (ProtectedRoute + RequireRole), `components/ErrorBoundary.tsx`
+2. Edit: `App.tsx` (real auth pages, guard nesting, ErrorBoundary outermost), `Layout.tsx` (role-filtered nav), `Placeholders.tsx` (drop auth stubs), `App.css` (form/button styles)
+3. Verify: build+lint green · anon `/` → `/login` · bad input field errors + focus · wrong password server error, inputs preserved · dev sees no Users link, `/users` → `/403` · admin sees Users · register dup-email/short-pw handling · sign-out · session restore; commit includes pending `osnClick→onClick` hamburger fix
+4. Then `next` → assistant verifies → **Phase 5** opens with global exception middleware + structured logging (assignment Day-3 #8), then project CRUD API
 
 ## Standing cautions
 - Stop the API before `dotnet build`/`dotnet ef` (running exe locks the build) — past "failures" were MSB3021 file locks, not code errors

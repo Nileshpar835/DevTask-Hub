@@ -64,7 +64,7 @@ export default function Layout() {
 
             <div className="main">
                 <header className="topbar">
-                    <button className="hamburger" osnClick={() => setOpen((v) => !v)} aria-label="Toggle navigation">
+                    <button className="hamburger" onClick={() => setOpen((v) => !v)} aria-label="Toggle navigation">
                         ☰
                     </button>
                     <h1 className="page-title">{titleFor(pathname)}</h1>

@@ -3,7 +3,8 @@
 ## Current phase
 **Phase 3 — CLOSED 2026-10-23.** 3.1 ✅, 3.2 ✅ (all gates), 3.3 ✅ (assistant-verified: anon 401 / dev 403 / admin 200 + swagger.json securitySchemes).
 **Phase 4.1 — CLOSED 2026-10-23 (verified: `npm run build` green, commit `13d139a`).**
-**Phase 4.2 — INSTRUCTIONS ISSUED 2026-10-23:** CORS policy in Program.cs (browser→API was blocked — not configured anywhere), `npm install axios`, `src/api/client.ts` (bearer + 401 single-flight refresh + retry), `src/context/AuthContext.tsx` (token in memory, boot via refresh+`/me`, login/register/logout), Layout user chip wired to auth.
+**Phase 4.2 — CLOSED 2026-10-23 (verified: CORS preflight 204 + correct headers against live API, frontend build green, AuthProvider wired, commits `661d810`/`cd6a94e`/`06bd025`; browser session-restore test folded into 4.3).**
+**Phase 4.3 — INSTRUCTIONS ISSUED 2026-10-23:** real Login/Register forms (controlled inputs, client validation, focus-first-invalid, pending state, server-error display), ProtectedRoute + RequireRole guards, role-filtered nav, ErrorBoundary — closes Phase 4. Note: one-line `osnClick→onClick` hamburger fix is uncommitted in `Layout.tsx` — include it in the 4.3 commit.
 **Phases 0–2 COMPLETE (verified).** Branch `day1-developing`, repo `D:\Assignment\DevTask-Hub`.
 
 ## Completed work
@@ -44,4 +45,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User types Phase 4.2 (CORS in `Program.cs`, `api/client.ts`, `context/AuthContext.tsx`, AuthProvider wrap, Layout chip), runs the verification list, then types `next` → assistant verifies (build + CORS preflight headers + boot behavior) → **Phase 4.3**: login/register forms (controlled inputs, validation), protected routes, role-aware nav, error boundary — closes Phase 4.
+User types Phase 4.3 (`pages/Login.tsx`, `pages/Register.tsx`, `components/Guards.tsx`, `components/ErrorBoundary.tsx`, App/Layout/Placeholders/App.css edits), runs the browser test pass, commits (incl. pending hamburger fix), then types `next` → assistant verifies (build, lint, API-side 400/401 shapes) → **Phase 5.1**: global exception middleware + structured logging, then project CRUD API + authorization checks.
