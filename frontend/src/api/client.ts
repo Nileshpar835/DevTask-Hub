@@ -5,7 +5,7 @@ const API_BASE = "http://localhost:5109/api";
 export interface AuthUser {
     id: number;
     email: string;
-    fullname: string;
+    fullName: string;
     role: "Admin" | "Developer";
 }
 

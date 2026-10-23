@@ -52,7 +52,7 @@ export default function Layout() {
                 <div className="user-chip">
                     {user ? (
                         <>
-                            <div>{user.fullname}</div>
+                            <div>{user.fullName}</div>
                             <div className="user-role">{user.role}</div>
                             <button type="button" onClick={() => void logout()}>Sign Out</button>
                         </>
@@ -64,11 +64,11 @@ export default function Layout() {
 
             <div className="main">
                 <header className="topbar">
-                    <button className="hamburger" onClick={() => setOpen((v) => !v)} aria-label="Toggle navigation">
+                    <button className="hamburger" osnClick={() => setOpen((v) => !v)} aria-label="Toggle navigation">
                         ☰
                     </button>
                     <h1 className="page-title">{titleFor(pathname)}</h1>
-                    <div className="avatar" aria-hidden="true">{user ? user.fullname.charAt(0).toUpperCase() : "?"}</div>
+                    <div className="avatar" aria-hidden="true">{user ? user.fullName.charAt(0).toUpperCase() : "?"}</div>
                 </header>
                 <main className="content">
                     <Outlet />
