@@ -29,18 +29,17 @@
 
 ## Phase 3 — Authentication & authorization 🔶 CURRENT
 - [x] 3.1 Register/login + PBKDF2 hashing (`PasswordHasher`) + DTO validation — verified: real `AQAAAA...` hashes in DB
-- [ ] 3.2 JWT + refresh rotation + `/me` + secure admin seed — **IN PROGRESS (round 4)**
+- [x] 3.2 JWT + refresh rotation + `/me` + secure admin seed — ✅ **verified 2026-10-23 (all 4 gates + reuse-detection passed against live API)**
   - [x] JwtBearer package; `TokenService`; `DbSeeder`; auth pipeline in Program.cs (`UseAuthentication`→`UseAuthorization`)
   - [x] Refresh-token rotation logic + reuse detection in `AuthService`
   - [x] Cookie flags: HttpOnly, SameSite=Lax, Path=/api/auth
   - [x] DTO record validation attributes on constructor parameters (500 fixed)
   - [x] `Jwt` Issuer/Audience block in appsettings.json (token now carries `aud`)
-  - [x] `SeedInitialAdmin` removed from AppDbContext "for real"
-  - [x] Migration `5_DeleteSeedAdminRow` contains `DeleteData`, applied — plaintext `Nilesh` row **deleted from DB** (sqlcmd-verified)
-  - [ ] **Fix C: `TokenService.cs` L40 typo `Jwr:Issuer` → `Jwt:Issuer`** (still present despite commit message — `iss` still missing → `/me` 401)
-  - [ ] App restart → `DbSeeder` creates hashed admin row (DB currently has **no** admin)
-  - [ ] 4-gate retest: dev `/me` 200 · admin login 200 · no-token 401 + short-password 400 · refresh→logout→401 cycle
-- [ ] 3.3 Swagger "Authorize" button + role-gated endpoint demo + Phase 3 close-out
+  - [x] `SeedInitialAdmin` removed from AppDbContext "for real"; migration `5_DeleteSeedAdminRow` (`DeleteData`) applied — plaintext row deleted
+  - [x] Fix C: `TokenService.cs` L40 `Jwr:Issuer` → `Jwt:Issuer` (token now carries `iss`)
+  - [x] App restarted → `DbSeeder` created hashed admin (row Id=4, `AQAAAA...` hash)
+  - [x] 4-gate retest PASSED: dev `/me` 200 · admin login 200/Role=Admin · no-token 401 + short-password 400 · login→refresh→logout→401 cycle · rotated-token replay → 401
+- [ ] 3.3 Swagger "Authorize" button + role-gated endpoint demo + Phase 3 close-out — 🔶 issued
 
 ## Phase 4 — Frontend foundation & authentication ⬜
 - [ ] App layout + sidebar/topbar nav (design tokens from UI_PLAN)
@@ -100,11 +99,11 @@
 
 ---
 
-## Current blocker (Phase 3.2 gate)
-1. **Type Fix C:** `Services\TokenService.cs` line 40 → `_config["Jwt:Issuer"]`
-2. Restart API → seeder creates hashed admin
-3. Run 4-gate retest → paste results → commit
-4. Then `next` → Phase 3.3
+## Current blocker (Phase 3.3 — issued)
+1. `Program.cs`: configure `AddSwaggerGen` with `AddSecurityDefinition` + `AddSecurityRequirement` (Swashbuckle 10 / Microsoft.OpenApi **2.x** API — namespace `Microsoft.OpenApi`, NOT `Microsoft.OpenApi.Models`)
+2. New `Dtos/UserDtos.cs`, `Services/IUserService.cs`, `Services/UserService.cs`, `Controllers/UsersController.cs` (`[Authorize(Roles="Admin")]` on `GET /api/users`), register service in DI
+3. Retest matrix: anonymous 401 · dev 403 · admin 200 · Swagger Authorize button sends header
+4. Then `next` → assistant verifies + Phase 3 close-out
 
 ## Standing cautions
 - Stop the API before `dotnet build`/`dotnet ef` (running exe locks the build) — past "failures" were MSB3021 file locks, not code errors

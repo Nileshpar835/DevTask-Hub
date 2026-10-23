@@ -1,11 +1,9 @@
 # DevTask Hub — Progress Record
 
 ## Current phase
-**Phase 3.2 — JWT + refresh rotation + /me + secure admin seed: INSTRUCTIONS ISSUED 2026-10-21.**
-**Phase 3.1 — COMPLETE (verified by assistant 2026-10-21):** all 4 auth files present, Identity.Core installed, Swagger added by user; register/login proven working (`user@example.com` has genuine PBKDF2 hash in DB). Issues found: (a) seed admin `PasswordHash = "Nilesh"` = plaintext in source — admin login broken + secret committed; FIXED in 3.2 by runtime seeding from user-secrets + migration `3_RemovePlaceholderAdminSeed`. (b) DTO used lowercase `password`/`Fullname` — works via case-insensitive JSON binding; corrected in 3.2 DTO rewrite. (c) build "failures" were file locks from the running API process (stop before rebuild).
-**Work isolated on branch `day1-developing`.**
-**Repository at `D:\Assignment\DevTask-Hub` (canonical path).**
-Phase 0 — COMPLETE. Phase 1 — COMPLETE. Phase 2 — COMPLETE (verified).
+**Phase 3.2 — CLOSED (verified by assistant 2026-10-23, all 4 gates + refresh reuse-detection passed against live API :5109).**
+**Phase 3.3 — INSTRUCTIONS ISSUED 2026-10-23:** Swagger "Authorize" button (`AddSecurityDefinition`/`AddSecurityRequirement`), role-gated `GET /api/users` `[Authorize(Roles="Admin")]` demo, Phase 3 close-out.
+**Phase 3.1 — COMPLETE (verified 2026-10-21).** Work isolated on branch `day1-developing`; repository at `D:\Assignment\DevTask-Hub` (canonical). Phase 0–2 COMPLETE (verified).
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -27,8 +25,10 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 ```
 
 ## Known issues / open items
-- **3.2 round 4 (2026-10-22):** Fix B COMPLETED and verified — seed gone from `AppDbContext`, migration `5_DeleteSeedAdminRow` contains real `DeleteData`, applied; sqlcmd confirms plaintext admin row deleted (DB now has only the 2 dev users, **no admin yet** — seeder runs on next app start). Fix A already in place. **Fix C STILL OPEN:** `TokenService.cs` L40 still reads `_config["Jwr:Issuer"]` — commit `0bcda45` message claims the typo fix but the code was not changed (working tree clean → committed version has the typo). Also still present: stray `using System.Runtime.Intrinsics.Arm;` (L3), `Jwt:key` casing (L26, works via case-insensitive config). API currently stopped. **Next:** type Fix C, restart (admin seeds), 4-gate retest.
-- New tracking doc: `docs/CHECKLIST.md` (master checklist of all phases with verification state).
+- **3.2 CLOSED (2026-10-23, assistant-verified):** dev login → `/me` 200 (claims match); admin login 200/Role=Admin (row Id=4, real `AQAAAA...` hash); anonymous `/me` 401; short-password register 400; cookie cycle login→refresh→logout→refresh-401; rotated refresh-token replay → 401 (reuse detection works). Token payload verified: `iss=DevTaskHub`, `aud=DevTaskHub.Client`, role claim = `ClaimTypes.Role` long-URI (`http://schemas.microsoft.com/ws/2008/06/identity/claims/role`) → `[Authorize(Roles=...)]` works with no extra config. Fix B landed via migration `5_DeleteSeedAdminRow`; migrations 3+4 remain harmless empty no-ops.
+- **3.3 API facts (researched against installed packages — do not use pre-2024 tutorials):** Swashbuckle 10.3.1 → Microsoft.OpenApi **2.12.0**: all types live in namespace `Microsoft.OpenApi` (`Microsoft.OpenApi.Models` is the dead 1.x namespace — old snippets will not compile). `AddSecurityDefinition(string, IOpenApiSecurityScheme)`; `AddSecurityRequirement` now takes `Func<OpenApiDocument, OpenApiSecurityRequirement>`; the requirement key is `new OpenApiSecuritySchemeReference(name, document)`. Canonical snippet source: Swashbuckle's own `docs/configure-and-customize-swaggergen.md` ("Bearer authentication").
+- Optional cosmetic leftovers in `TokenService.cs`: stray `using System.Runtime.Intrinsics.Arm;` (L3), `Jwt:key` casing (L26 — works via case-insensitive config), message typo "missiong".
+- `docs/CHECKLIST.md` = master tracker. NuGet advisory: transitive `System.Security.Cryptography.Pkcs 9.0.11` (deferred to Phase 12). Phase 1.3 runtime check never reported.
 - Phase 1.1–1.3 lack user-reported verification output; if anything fails in Phase 2, re-run: `dotnet build` (backend), `npm run build` (frontend), `dotnet run` + `npm run dev`.
 - Solution file is `DevTaskHub.slnx` (new .NET XML solution format) rather than `.sln`; harmless — keep using it as-is.
 - `frontend/README.md` is the Vite template default; root `README.md` is the real one.
@@ -43,4 +43,4 @@ Get-ChildItem / git status / git log  (Phase 1.4 inspection)
 - Rollback options: `git revert <sha>` (safe, keeps history) or `git reset --hard main` on the feature branch (discards unmerged commits) — details in the session notes.
 
 ## Next permitted action
-User completes Phase 3.2 (Jwt:Key + seed secrets, JwtBearer package, TokenService/AuthDtos/IAuthService/AuthService/AuthController rewrites, DbSeeder, AppDbContext seed removal, Program.cs auth pipeline, migration 3 + database update, end-to-end test: login → /me → refresh → logout), reports results, then types `next` → **Phase 3.3**: Swagger UI auth testing (bearer scheme), role-policy demonstration, and closing summary of Phase 3.
+User types Phase 3.3 code (Swagger security config in `Program.cs`; new `Dtos/UserDtos.cs`, `Services/IUserService.cs`, `Services/UserService.cs`, `Controllers/UsersController.cs`; DI registration), runs the test matrix (anonymous 401 · dev 403 · admin 200 · Swagger Authorize button sends header), then types `next` → assistant verifies and, if all pass, closes Phase 3 → **Phase 4.1**: frontend foundation (layout, Axios client with bearer + 401 interceptor, auth context).

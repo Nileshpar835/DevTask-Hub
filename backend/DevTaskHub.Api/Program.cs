@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using System.Text;
 using DevTaskHub.Api.Data;
 using DevTaskHub.Api.Domain;
@@ -6,12 +7,30 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer",new OpenApiSecurityScheme
+    {
+        Name="Authorization",
+        Type=SecuritySchemeType.Http,
+        Scheme="bearer",
+        BearerFormat="JWT",
+        In=ParameterLocation.Header,
+        Description="Paste the Access Token From /api/auth/login(No 'Bearer' prefix - Swagger Adds it)."
+
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer",document)]=[]
+    });
+});
+
 
 var connectionString = builder.Configuration.GetConnectionString("DevTaskHub")
     ?? throw new InvalidOperationException("Connection string 'DevTaskHub' not found.");
@@ -45,6 +64,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
