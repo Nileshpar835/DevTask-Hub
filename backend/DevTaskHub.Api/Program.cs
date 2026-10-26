@@ -15,21 +15,29 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("Bearer",new OpenApiSecurityScheme
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name="Authorization",
-        Type=SecuritySchemeType.Http,
-        Scheme="bearer",
-        BearerFormat="JWT",
-        In=ParameterLocation.Header,
-        Description="Paste the Access Token From /api/auth/login(No 'Bearer' prefix - Swagger Adds it)."
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste the Access Token From /api/auth/login(No 'Bearer' prefix - Swagger Adds it)."
 
     });
     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        [new OpenApiSecuritySchemeReference("Bearer",document)]=[]
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 });
+
+builder.Services.AddCors(options =>
+    options.AddPolicy("Frontend", policy => policy
+    .WithOrigins("http://localhost:5173")
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()
+    ));
 
 
 var connectionString = builder.Configuration.GetConnectionString("DevTaskHub")
@@ -74,7 +82,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors("Frontend");
 app.UseAuthentication();   // reads/validates the JWT → fills HttpContext.User
 app.UseAuthorization();    // enforces [Authorize]
 
