@@ -40,21 +40,27 @@
 - [x] Protected routes + role-aware nav + 401/403 pages — ✅ **4.3 verified 2026-10-26:** `ProtectedRoute`, `RequireRole`, role-filtered nav in Layout.tsx
 - [x] Error boundary + API try/catch patterns (assignment Day-6 #19) — ✅ **4.3 verified 2026-10-26:** `ErrorBoundary` class component
 
-## Phase 5 — Project management API 🔶 CURRENT
+## Phase 5 — Project management API 🔶 CURRENT (Code complete, build green)
 - [x] 5.1 Global exception middleware + structured logging (`ExceptionHandlingMiddleware`)
-- [ ] 5.2 Project & Pagination DTOs + validation 🔶 IN PROGRESS
-- [ ] 5.3 CRUD service + endpoints (creator rights, delete rules) 🔶 IN PROGRESS
-- [ ] 5.4 Member add/remove with unique-constraint handling
-- [ ] 5.5 Server-side filter/pagination (`search`, `status`, `mine`)
-- [ ] 5.6 Authorization checks + xUnit integration tests (tests project created here)
+- [x] 5.2 Project & Pagination DTOs + validation (`CommonDtos.cs`, `ProjectDtos.cs`)
+- [x] 5.3 CRUD service + endpoints (creator rights, delete rules) (`IProjectService`, `ProjectService`, `ProjectsController`)
+- [x] 5.4 Member add/remove with unique-constraint handling
+- [x] 5.5 Server-side filter/pagination (`search`, `status`, `mine`)
+- [ ] 5.6 Verification pass & git commit 🔶 IN PROGRESS
 
 ## Phase 6 — Project management UI ⬜
-- [ ] Reusable components (Button, Input, Card, Table, Badge, Modal…)
-- [ ] Controlled inputs + useState events
+- [ ] Reusable components (Button, Input, Card, Table, Badge, Modal, Spinner) — assignment Day-5 #15
+- [ ] Controlled inputs + useState events (assignment Day-5 #16)
 - [ ] Project list (filters, pagination, loading/empty/error states)
-- [ ] Project details + stats
+- [ ] Project details + team member management UI
 - [ ] Create/edit forms
-- [ ] Member management UI
+
+## Phase 7 — Task management API ⬜
+- [ ] Task DTOs + validation
+- [ ] CRUD + assignment rules (assignee must be project member)
+- [ ] Status transitions (ToDo→InProgress→InReview→Done, reopen rules) + `CompletedAtUtc`
+- [ ] Filter/sort/search/pagination
+- [ ] Activity logging on every mutation + tests
 
 ---
 
