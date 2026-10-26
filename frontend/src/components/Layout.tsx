@@ -2,8 +2,9 @@ import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
+interface NavItem { to: string; label: string; end?: boolean; adminOnly?: boolean }
 // Role-aware filtering (hiding "Users" from non-admins) arrives in 4.3.
-const NAV_ITEMS = [
+const NAV_ITEMS: NavItem[] = [
     { to: "/", label: "Dashboard", end: true },
     { to: "/projects", label: "Projects" },
     { to: "/tasks", label: "Tasks" },
@@ -31,13 +32,13 @@ export default function Layout() {
     const [open, setOpen] = useState(false);
     const { pathname } = useLocation();
     const { user, logout } = useAuth();
-
+    const visibleNav = NAV_ITEMS.filter((item) => !item.adminOnly || user?.role === "Admin");
     return (
         <div className={`app${open ? " nav-open" : ""}`}>
             <aside className="sidebar">
                 <div className="brand">DevTask Hub</div>
                 <nav className="nav">
-                    {NAV_ITEMS.map((item) => (
+                    {visibleNav.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}

@@ -2,19 +2,7 @@ export function Dashboard() {
     return <h2>Dashboard</h2>;
 }
 
-export function Login() {
-    return <div className="auth-page">
-        <h2>Sign In</h2>
-        <p>Form arrives in 4.3.</p>
-    </div>;
-}
 
-export function Register() {
-    return <div className="auth-page">
-        <h2>Create account</h2>
-        <p>Form arrives in 4.3.</p>
-    </div>;
-}
 
 export function Projects() {
     return <h2>Projects</h2>;

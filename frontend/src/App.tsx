@@ -1,12 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import {
-  Dashboard, Login, Register, Projects, ProjectDetails, ProjectForm,
+  Dashboard, Projects, ProjectDetails, ProjectForm,
   ProjectMembers, Tasks, TaskDetails, TaskCreate, Users, Profile,
   Forbidden, NotFound,
 } from "./pages/Placeholders";
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
+import { RequireRole } from "./components/Guards";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 export default function App() {
   return (
@@ -28,7 +31,10 @@ export default function App() {
             <Route path="tasks" element={<Tasks />} />
             <Route path="tasks/new" element={<TaskCreate />} />
             <Route path="tasks/:id" element={<TaskDetails />} />
-            <Route path="users" element={<Users />} />
+            <Route element={<RequireRole role="Admin" />}>
+              <Route path="users" element={<Users />} />
+            </Route>
+            {/* <Route path="users" element={<Users />} /> */}
             <Route path="profile" element={<Profile />} />
             <Route path="403" element={<Forbidden />} />
             <Route path="*" element={<NotFound />} />
