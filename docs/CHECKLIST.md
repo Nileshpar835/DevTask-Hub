@@ -40,20 +40,19 @@
 - [x] Protected routes + role-aware nav + 401/403 pages — ✅ **4.3 verified 2026-10-26:** `ProtectedRoute`, `RequireRole`, role-filtered nav in Layout.tsx
 - [x] Error boundary + API try/catch patterns (assignment Day-6 #19) — ✅ **4.3 verified 2026-10-26:** `ErrorBoundary` class component
 
-## Phase 5 — Project management API 🔶 CURRENT (Code complete, build green)
+## Phase 5 — Project management API ✅ (closed 2026-10-26, commit `33cadef`)
 - [x] 5.1 Global exception middleware + structured logging (`ExceptionHandlingMiddleware`)
 - [x] 5.2 Project & Pagination DTOs + validation (`CommonDtos.cs`, `ProjectDtos.cs`)
 - [x] 5.3 CRUD service + endpoints (creator rights, delete rules) (`IProjectService`, `ProjectService`, `ProjectsController`)
 - [x] 5.4 Member add/remove with unique-constraint handling
 - [x] 5.5 Server-side filter/pagination (`search`, `status`, `mine`)
-- [ ] 5.6 Verification pass & git commit 🔶 IN PROGRESS
+- [x] 5.6 Verification pass & git commit (`33cadef`)
 
-## Phase 6 — Project management UI ⬜
-- [ ] Reusable components (Button, Input, Card, Table, Badge, Modal, Spinner) — assignment Day-5 #15
-- [ ] Controlled inputs + useState events (assignment Day-5 #16)
-- [ ] Project list (filters, pagination, loading/empty/error states)
-- [ ] Project details + team member management UI
-- [ ] Create/edit forms
+## Phase 6 — Project management UI 🔶 CURRENT
+- [x] 6.1 Project API client (`src/api/projects.ts`)
+- [x] 6.2 Reusable components (`Badge`, `Modal`, `Pagination`) — assignment Day-5 #15
+- [x] 6.3 Projects list page (search, filters, pagination, loading/empty states, Create modal) — assignment Day-5 #16
+- [ ] 6.4 Project details page & member management UI
 
 ## Phase 7 — Task management API ⬜
 - [ ] Task DTOs + validation
