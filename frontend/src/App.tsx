@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import {
-  Dashboard, ProjectForm,
+   ProjectForm,
   ProjectMembers, TaskCreate, Users, Profile,
   Forbidden, NotFound,
 } from "./pages/Placeholders";
@@ -14,6 +14,7 @@ import Projects from "./pages/Projects";
 import ProjectDetails from "./pages/ProjectDetails";
 import Tasks from "./pages/Tasks";
 import TaskDetails from "./pages/TaskDetails";
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
   return (

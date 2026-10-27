@@ -61,18 +61,17 @@
 - [x] 7.4 Filter/sort/search/pagination (`projectId`, `assigneeId`, `status`, `priority`, `mine`)
 - [x] 7.5 Automated activity logging on every mutation (`TaskActivityLog`)
 
-## Phase 8 — Task management UI 🔶 CURRENT
+## Phase 8 — Task management UI ✅ (closed 2026-10-27, commits `b7e32a9`, `5f54a1e`)
 - [x] 8.1 Task API client (`src/api/tasks.ts`)
 - [x] 8.2 Task list with filters/sort/pagination (`src/pages/Tasks.tsx`)
 - [x] 8.3 Task creation modal with project & member selectors
-- [ ] 8.4 Task details page + status transition controls + activity timeline (`src/pages/TaskDetails.tsx`)
+- [x] 8.4 Task details page + status transition controls + activity timeline (`src/pages/TaskDetails.tsx`)
 
-## Phase 9 — Dashboards & performance ⬜
-- [ ] 9.1 `/api/dashboard/admin` stats (real SQL aggregates)
-- [ ] 9.2 `/api/dashboard/developer` stats (assigned counts, due soon, overdue)
-- [ ] 9.3 Admin + developer dashboard screens in React
-- [ ] 9.4 Route lazy loading, code splitting, memoization pass, responsive check
-- [ ] 9.5 Request cancellation (`AbortController`) + timeout/retry + loading states (assignment Day-8 #24)
+## Phase 9 — Dashboards & performance 🔶 CURRENT
+- [x] 9.1 `/api/dashboard/admin` and `/api/dashboard/developer` stats (real SQL aggregates)
+- [ ] 9.2 Admin & developer dashboard screens in React (`src/pages/Dashboard.tsx`)
+- [ ] 9.3 Route lazy loading, code splitting, memoization pass, responsive check
+- [ ] 9.4 Request cancellation (`AbortController`) + timeout/retry + loading states (assignment Day-8 #24)
 
 ## Phase 10 — GitHub integration ⬜
 - [ ] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling

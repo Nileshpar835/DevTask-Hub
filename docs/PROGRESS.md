@@ -5,16 +5,12 @@
 **Phase 4 — CLOSED 2026-10-26.** (commits `13d139a`, `cd6a94e`, `06bd025`, `95de84e` on `day5-developing`). Verified: `npm run build` green, `npm run lint` green.
 **Phase 5 — CLOSED 2026-10-26.** (commits `d91019f`, `33cadef` on `day5-developing`). Backend API build verified green (0 errors).
 **Phase 6 — CLOSED 2026-10-27.** (commit `9bd8bc2`). Project Management UI (list, details, team members, modals, UI primitives).
-**Phase 7 — CLOSED 2026-10-27.** (commit `8776f9b`). Task Management Backend API:
-- Subphase 7.1 ✅: Task DTOs & validation (`TaskDtos.cs`).
-- Subphase 7.2 ✅: Task Service (`ITaskService`, `TaskService`) with transition state machine, member assignment guard, and automated activity logging.
-- Subphase 7.3 ✅: `TasksController` endpoints (`GET /api/tasks`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id/status`, `PATCH /:id/assignee`, `DELETE /:id`, `GET /:id/activity`).
-- Subphase 7.4 ✅: Backend build verified green (0 errors).
-**Phase 8 — IN PROGRESS (Task Management Frontend UI).**
-- Subphase 8.1 ✅: Typed Task API client (`src/api/tasks.ts`).
-- Subphase 8.2 ✅: Tasks list page (`src/pages/Tasks.tsx`) with search, project filter, status pills, priority badges, and pagination.
-- Subphase 8.3 ✅: Task Create modal with dynamic project-member loading. Verified: `npm run build` green, `npm run lint` green (0 errors).
-- Subphase 8.4 🔶 (NEXT): Task Details page (`src/pages/TaskDetails.tsx`) with status switcher dropdown (enforcing transition rules), assignee selector, and activity audit timeline.
+**Phase 7 — CLOSED 2026-10-27.** (commit `8776f9b`). Task Management Backend API (CRUD, status state machine, project-member assignee guard, activity audit logs).
+**Phase 8 — CLOSED 2026-10-27.** (commits `b7e32a9`, `5f54a1e`). Task Management Frontend UI.
+**Phase 9 — IN PROGRESS (Dashboards & Performance).**
+- Subphase 9.1 ✅: Dashboard statistics backend endpoints (`GET /api/dashboard/admin`, `GET /api/dashboard/developer`). Build verified green (0 errors).
+- Subphase 9.2 & 9.3 🔶 (NEXT): Real Dashboard UI in React (`src/api/dashboard.ts`, `src/pages/Dashboard.tsx`) with role-based Admin & Developer views.
+- Subphase 9.4 ⬜: Route lazy loading, memoization pass, and request cancellation.
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -29,7 +25,8 @@
 - Phase 5: Complete Project Management API (Exception middleware, Project DTOs, Service, Controller with CRUD, members, filters, pagination).
 - Phase 6: Complete Project Management UI (Projects list, Project Details, team member management, edit/delete modals, UI primitives).
 - Phase 7: Complete Task Management API (CRUD, status transition state machine, project membership validation, automated audit logging, filters, pagination).
-- Phase 8 (Part 1): Task API client, Tasks list page with multi-factor filters, and task creation modal.
+- Phase 8: Complete Task Management UI (Tasks list, multi-filter query bar, Task Details with state machine transitions, project-member assignee selector, and activity audit timeline).
+- Phase 9.1: Dashboard statistics backend API (Admin & Developer aggregation services and endpoints).
 
 ## Known issues / open items
 - Transitive `System.Security.Cryptography.Pkcs 9.0.11` NuGet advisory deferred to Phase 12.
@@ -39,4 +36,4 @@
 - Canonical repo: `D:\Assignment\DevTask-Hub`.
 
 ## Next permitted action
-Commit Phase 8 (Part 1), then implement Phase 8.4 (`TaskDetails.tsx` with activity timeline).
+Implement Phase 9.2 & 9.3 (Frontend Dashboard API client, role-based views in `Dashboard.tsx`).

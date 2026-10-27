@@ -82,7 +82,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProjectService, ProjectService>(); // <-- Add this
 builder.Services.AddScoped<ITaskService, TaskService>(); // <-- Add this
-
+builder.Services.AddScoped<IDashboardService, DashboardService>(); // <-- Add thisss
 
 var app = builder.Build();
 
