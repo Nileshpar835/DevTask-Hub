@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import {
   Dashboard, ProjectForm,
-  ProjectMembers, TaskDetails, TaskCreate, Users, Profile,
+  ProjectMembers, TaskCreate, Users, Profile,
   Forbidden, NotFound,
 } from "./pages/Placeholders";
 import "./App.css";
@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import Projects from "./pages/Projects";
 import ProjectDetails from "./pages/ProjectDetails";
 import Tasks from "./pages/Tasks";
+import TaskDetails from "./pages/TaskDetails";
 
 export default function App() {
   return (

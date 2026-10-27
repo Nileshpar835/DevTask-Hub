@@ -36,9 +36,9 @@ export function ProjectMembers() {
 //     return <h2>Tasks</h2>;
 // }
 
-export function TaskDetails() {
-    return <h2>Task details</h2>;
-}
+// export function TaskDetails() {
+//     return <h2>Task details</h2>;
+// }
 
 export function TaskCreate() {
     return <h2>New task</h2>;
