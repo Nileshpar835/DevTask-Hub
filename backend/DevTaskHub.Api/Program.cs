@@ -81,6 +81,8 @@ builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProjectService, ProjectService>(); // <-- Add this
+builder.Services.AddScoped<ITaskService, TaskService>(); // <-- Add this
+
 
 var app = builder.Build();
 

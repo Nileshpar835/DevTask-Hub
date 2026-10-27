@@ -4,16 +4,17 @@
 **Phase 3 — CLOSED 2026-10-23.** 3.1 ✅, 3.2 ✅ (all gates), 3.3 ✅ (assistant-verified: anon 401 / dev 403 / admin 200 + swagger.json securitySchemes).
 **Phase 4 — CLOSED 2026-10-26.** (commits `13d139a`, `cd6a94e`, `06bd025`, `95de84e` on `day5-developing`). Verified: `npm run build` green, `npm run lint` green.
 **Phase 5 — CLOSED 2026-10-26.** (commits `d91019f`, `33cadef` on `day5-developing`). Backend API build verified green (0 errors).
-**Phase 6 — CLOSED 2026-10-27.** (commit pending). Project Management UI:
-- Subphase 6.1 ✅: Typed Project API client (`src/api/projects.ts`, `src/api/users.ts`).
-- Subphase 6.2 ✅: Reusable UI components (`Badge`, `Modal`, `Pagination` in `src/components/ui/`).
-- Subphase 6.3 ✅: Projects list page (`src/pages/Projects.tsx`) with search, filter pills, pagination, and Create Project modal.
-- Subphase 6.4 ✅: Project Details page & team member management UI (`src/pages/ProjectDetails.tsx`). Verified: `npm run build` green, `npm run lint` green (0 errors).
-**Phase 7 — IN PROGRESS (Task Management Backend API).**
-- Subphase 7.1: Task DTOs & state machine transitions (`TaskDtos.cs`).
-- Subphase 7.2: Task Service (`ITaskService`, `TaskService`) with assignee project-membership check and automated activity logging.
-- Subphase 7.3: `TasksController` endpoints (CRUD, status transitions, assignee updates, activity logs).
-- Subphase 7.4: Verification pass & build.
+**Phase 6 — CLOSED 2026-10-27.** Complete Project Management UI (list, details, team members, modals, UI primitives). Verified: `npm run build` green, `npm run lint` green (0 errors).
+**Phase 7 — CLOSED 2026-10-27.** (commit pending). Task Management Backend API:
+- Subphase 7.1 ✅: Task DTOs & validation (`TaskDtos.cs`).
+- Subphase 7.2 ✅: Task Service (`ITaskService`, `TaskService`) with transition state machine, member assignment guard, and automated activity logging.
+- Subphase 7.3 ✅: `TasksController` endpoints (`GET /api/tasks`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id/status`, `PATCH /:id/assignee`, `DELETE /:id`, `GET /:id/activity`).
+- Subphase 7.4 ✅: Backend build verified green (0 errors).
+**Phase 8 — IN PROGRESS (Task Management Frontend UI).**
+- Subphase 8.1: Typed Task API client (`src/api/tasks.ts`).
+- Subphase 8.2: Tasks list page (`src/pages/Tasks.tsx`) with search, project filter, status pills, priority badges, and pagination.
+- Subphase 8.3: Task Create modal (`CreateTaskModal.tsx`).
+- Subphase 8.4: Task Details page (`src/pages/TaskDetails.tsx`) with status switcher dropdown (enforcing transition rules), assignee selector, and activity audit timeline.
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -27,6 +28,7 @@
 - Phase 4: Frontend App shell, Axios client + silent refresh, AuthContext, real Login & Register forms, ProtectedRoute & RequireRole guards, role-filtered nav, ErrorBoundary.
 - Phase 5: Complete Project Management API (Exception middleware, Project DTOs, Service, Controller with CRUD, members, filters, pagination).
 - Phase 6: Complete Project Management UI (Projects list, Project Details, team member management, edit/delete modals, UI primitives).
+- Phase 7: Complete Task Management API (CRUD, status transition state machine, project membership validation, automated audit logging, filters, pagination).
 
 ## Known issues / open items
 - Transitive `System.Security.Cryptography.Pkcs 9.0.11` NuGet advisory deferred to Phase 12.
@@ -36,4 +38,4 @@
 - Canonical repo: `D:\Assignment\DevTask-Hub`.
 
 ## Next permitted action
-Commit Phase 6, then begin Phase 7 (Task Management Backend API).
+Commit Phase 7, then begin Phase 8 (Task Management Frontend UI).

@@ -54,18 +54,18 @@
 - [x] 6.3 Projects list page (search, filters, pagination, loading/empty states, Create modal) — assignment Day-5 #16
 - [x] 6.4 Project details page & member management UI (`src/pages/ProjectDetails.tsx`)
 
-## Phase 7 — Task management API 🔶 CURRENT
-- [ ] 7.1 Task DTOs + validation (`TaskDtos.cs`)
-- [ ] 7.2 CRUD + assignment rules (assignee must be project member)
-- [ ] 7.3 Status transitions state machine (ToDo→InProgress→InReview→Done, reopen rules) + `CompletedAtUtc`
-- [ ] 7.4 Filter/sort/search/pagination (`projectId`, `assigneeId`, `status`, `priority`)
-- [ ] 7.5 Automated activity logging on every mutation (`TaskActivityLog`)
+## Phase 7 — Task management API ✅ (closed 2026-10-27)
+- [x] 7.1 Task DTOs + validation (`TaskDtos.cs`)
+- [x] 7.2 CRUD + assignment rules (assignee must be project member)
+- [x] 7.3 Status transitions state machine (ToDo→InProgress→InReview→Done, reopen rules) + `CompletedAtUtc`
+- [x] 7.4 Filter/sort/search/pagination (`projectId`, `assigneeId`, `status`, `priority`, `mine`)
+- [x] 7.5 Automated activity logging on every mutation (`TaskActivityLog`)
 
-## Phase 8 — Task management UI ⬜
+## Phase 8 — Task management UI 🔶 CURRENT
 - [ ] 8.1 Task API client (`src/api/tasks.ts`)
-- [ ] 8.2 Task list with filters/sort/pagination
-- [ ] 8.3 Task details + activity timeline
-- [ ] 8.4 Create/edit forms & status transition controls
+- [ ] 8.2 Task list with filters/sort/pagination (`src/pages/Tasks.tsx`)
+- [ ] 8.3 Task creation modal with project & member selectors
+- [ ] 8.4 Task details page + status transition controls + activity timeline (`src/pages/TaskDetails.tsx`)
 
 ---
 
