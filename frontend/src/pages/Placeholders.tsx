@@ -20,9 +20,9 @@ export function Dashboard() {
 //     return <h2>Projects</h2>;
 // }
 
-export function ProjectDetails() {
-    return <h2>Project Details</h2>;
-}
+// export function ProjectDetails() {
+//     return <h2>Project Details</h2>;
+// }
 
 export function ProjectForm() {
     return <h2>Project form</h2>;

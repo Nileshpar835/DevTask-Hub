@@ -17,11 +17,13 @@ export default function Projects() {
     const [data, setData] = useState<PagedResult<ProjectSummary> | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
     // Filter & Query States
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<ProjectStatus | "">("");
     const [mineOnly, setMineOnly] = useState(false);
     const [page, setPage] = useState(1);
+    
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newKey, setNewKey] = useState("");

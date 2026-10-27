@@ -75,7 +75,7 @@ export async function fetchProjects(params: ProjectQueryParams = {}):
 }
 
 export async function fetchProjectById(id: number): Promise<ProjectDetail> {
-    const { data } = await api.get<ProjectDetail>(`/project/${id}`);
+    const { data } = await api.get<ProjectDetail>(`/projects/${id}`);
     return data;
 }
 
