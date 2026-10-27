@@ -48,13 +48,13 @@
 - [x] 5.5 Server-side filter/pagination (`search`, `status`, `mine`)
 - [x] 5.6 Verification pass & git commit (`33cadef`)
 
-## Phase 6 — Project management UI ✅ (closed 2026-10-27)
+## Phase 6 — Project management UI ✅ (closed 2026-10-27, commit `9bd8bc2`)
 - [x] 6.1 Project API client (`src/api/projects.ts`, `src/api/users.ts`)
 - [x] 6.2 Reusable components (`Badge`, `Modal`, `Pagination`) — assignment Day-5 #15
 - [x] 6.3 Projects list page (search, filters, pagination, loading/empty states, Create modal) — assignment Day-5 #16
 - [x] 6.4 Project details page & member management UI (`src/pages/ProjectDetails.tsx`)
 
-## Phase 7 — Task management API ✅ (closed 2026-10-27)
+## Phase 7 — Task management API ✅ (closed 2026-10-27, commit `8776f9b`)
 - [x] 7.1 Task DTOs + validation (`TaskDtos.cs`)
 - [x] 7.2 CRUD + assignment rules (assignee must be project member)
 - [x] 7.3 Status transitions state machine (ToDo→InProgress→InReview→Done, reopen rules) + `CompletedAtUtc`
@@ -62,10 +62,37 @@
 - [x] 7.5 Automated activity logging on every mutation (`TaskActivityLog`)
 
 ## Phase 8 — Task management UI 🔶 CURRENT
-- [ ] 8.1 Task API client (`src/api/tasks.ts`)
-- [ ] 8.2 Task list with filters/sort/pagination (`src/pages/Tasks.tsx`)
-- [ ] 8.3 Task creation modal with project & member selectors
+- [x] 8.1 Task API client (`src/api/tasks.ts`)
+- [x] 8.2 Task list with filters/sort/pagination (`src/pages/Tasks.tsx`)
+- [x] 8.3 Task creation modal with project & member selectors
 - [ ] 8.4 Task details page + status transition controls + activity timeline (`src/pages/TaskDetails.tsx`)
+
+## Phase 9 — Dashboards & performance ⬜
+- [ ] 9.1 `/api/dashboard/admin` stats (real SQL aggregates)
+- [ ] 9.2 `/api/dashboard/developer` stats (assigned counts, due soon, overdue)
+- [ ] 9.3 Admin + developer dashboard screens in React
+- [ ] 9.4 Route lazy loading, code splitting, memoization pass, responsive check
+- [ ] 9.5 Request cancellation (`AbortController`) + timeout/retry + loading states (assignment Day-8 #24)
+
+## Phase 10 — GitHub integration ⬜
+- [ ] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling
+- [ ] 10.2 Link/unlink GitHub profile (`GitHubAccounts`)
+- [ ] 10.3 Task ↔ PR linking (unique owner/repo/number)
+- [ ] 10.4 PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
+- [ ] 10.5 UI: integration badges + last-sync display
+
+## Phase 11 — ASP.NET Core MVC review ⬜
+- [ ] 11.1 Decide if any server-rendered page is justified (documented no-op allowed)
+- [ ] 11.2 Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — implement if MVC route chosen, else document API-only deviation
+
+## Phase 12 — Testing, security & finalization ⬜
+- [ ] 12.1 Azure Key Vault refactor (assignment Day-4 #11): Jwt:Key + connection string via Azure.Identity — needs Azure subscription; stays user-secrets + documented if unavailable
+- [ ] 12.2 Backend unit + integration tests (xUnit, `WebApplicationFactory`)
+- [ ] 12.3 Final code review & smoke test (assignment Day-4 #13 + Day-8 #25: React → API → EF → SQL → GitHub)
+- [ ] 12.4 Frontend component/workflow tests (Vitest + RTL)
+- [ ] 12.5 Security review (incl. `System.Security.Cryptography.Pkcs` NuGet advisory follow-up)
+- [ ] 12.6 Error handling + structured logging review
+- [ ] 12.7 Production config, deployment guidance, final README/architecture docs
 
 ---
 

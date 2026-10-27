@@ -32,9 +32,9 @@ export function ProjectMembers() {
     return <h2>Project members</h2>;
 }
 
-export function Tasks() {
-    return <h2>Tasks</h2>;
-}
+// export function Tasks() {
+//     return <h2>Tasks</h2>;
+// }
 
 export function TaskDetails() {
     return <h2>Task details</h2>;
