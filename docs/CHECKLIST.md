@@ -80,11 +80,11 @@
 - [x] 10.4 PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
 - [x] 10.5 UI: integration badges + last-sync display (`src/api/github.ts`, `TaskDetails.tsx`, `Profile.tsx`)
 
-## Phase 11 — ASP.NET Core MVC review 🔶 CURRENT
-- [ ] 11.1 Decide if any server-rendered page is justified (documented no-op allowed)
-- [ ] 11.2 Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — implement if MVC route chosen, else document API-only deviation
+## Phase 11 — ASP.NET Core MVC review ✅ (closed 2026-10-28, see docs/MVC_REVIEW.md)
+- [x] 11.1 Decide if any server-rendered page is justified (evaluated & documented no-op)
+- [x] 11.2 Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — documented API-only deviation; DataAnnotations & Model Binding verified
 
-## Phase 12 — Testing, security & finalization ⬜
+## Phase 12 — Testing, security & finalization 🔶 CURRENT
 - [ ] 12.1 Azure Key Vault refactor (assignment Day-4 #11): Jwt:Key + connection string via Azure.Identity — needs Azure subscription; stays user-secrets + documented if unavailable
 - [ ] 12.2 Backend unit + integration tests (xUnit, `WebApplicationFactory`)
 - [ ] 12.3 Final code review & smoke test (assignment Day-4 #13 + Day-8 #25: React → API → EF → SQL → GitHub)

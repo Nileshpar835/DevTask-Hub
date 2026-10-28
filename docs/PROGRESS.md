@@ -8,10 +8,16 @@
 **Phase 7 — CLOSED 2026-10-27.** (commit `8776f9b`). Task Management Backend API (CRUD, status state machine, project-member assignee guard, activity audit logs).
 **Phase 8 — CLOSED 2026-10-27.** (commits `b7e32a9`, `5f54a1e`). Task Management Frontend UI.
 **Phase 9 — CLOSED 2026-10-28.** (commits `d7a6162`, `8ba9304`). Dashboards & Performance (Admin & Dev stats, code splitting, request cancellation).
-**Phase 10 — CLOSED 2026-10-28.** GitHub Integration (commit `682e893` backend; frontend PR linking widget, live sync, profile connect/disconnect).
-**Phase 11 — IN PROGRESS (ASP.NET Core MVC Review).**
-- Subphase 11.1 🔶: Architectural compliance review — document Web API + React SPA design choice vs. server-side Razor pages.
-- Subphase 11.2 🔶: Razor forms / server-side validation review & optional demonstration or documented deviation.
+**Phase 10 — CLOSED 2026-10-28.** (commits `682e893`, `1c240e0`). GitHub Integration (Backend GitHub client with `IHttpClientFactory`, user profile link/unlink, Task $\leftrightarrow$ PR link, live status extraction [`Open`, `Merged`, `Closed`], 15-minute caching, frontend PR linking widget, live sync trigger, and Profile settings screen).
+**Phase 11 — CLOSED 2026-10-28.** ASP.NET Core MVC Review (ADR documented in `docs/MVC_REVIEW.md`; decoupled API + React SPA confirmed; server-side DataAnnotations & ModelBinding validated).
+**Phase 12 — IN PROGRESS (Testing, Security & Finalization).**
+- Subphase 12.1: Azure Key Vault refactor / document user-secrets strategy.
+- Subphase 12.2: Backend unit & integration tests (`xUnit`, `WebApplicationFactory`).
+- Subphase 12.3: Final code review & smoke test.
+- Subphase 12.4: Frontend component / workflow tests (`Vitest` + RTL).
+- Subphase 12.5: Security review & NuGet advisory check.
+- Subphase 12.6: Structured logging and error handling review.
+- Subphase 12.7: Production config, deployment guidance, and final root `README.md`.
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -29,6 +35,7 @@
 - Phase 8: Complete Task Management UI (Tasks list, multi-filter query bar, Task Details with state machine transitions, project-member assignee selector, and activity audit timeline).
 - Phase 9: Dashboards & Performance (Admin & Dev stats, role-tailored dashboard views, code-splitting chunks with `React.lazy`, and request cancellation).
 - Phase 10: Complete GitHub Integration (Backend GitHub client with `IHttpClientFactory`, user profile link/unlink, Task $\leftrightarrow$ PR link, live status extraction [`Open`, `Merged`, `Closed`], 15-minute caching, frontend PR linking widget, live sync trigger, and Profile settings screen).
+- Phase 11: ASP.NET Core MVC Review (ADR documented in `docs/MVC_REVIEW.md`; decoupled API + React SPA confirmed; server-side DataAnnotations & ModelBinding validated).
 
 ## Known issues / open items
 - Transitive `System.Security.Cryptography.Pkcs 9.0.11` NuGet advisory deferred to Phase 12.
@@ -38,4 +45,7 @@
 - Canonical repo: `D:\Assignment\DevTask-Hub`.
 
 ## Next permitted action
-Phase 11 (ASP.NET Core MVC review) and Phase 12 (Testing, security & finalization).
+Execute Phase 12 (Testing, security & finalization):
+1. Create and run backend unit & integration tests (`backend/tests/DevTaskHub.Tests`).
+2. Add frontend unit/component tests (`Vitest` + React Testing Library).
+3. Conduct security review, NuGet audit, and deployment/README documentation.
