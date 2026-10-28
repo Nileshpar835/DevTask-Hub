@@ -7,10 +7,17 @@
 **Phase 6 — CLOSED 2026-10-27.** (commit `9bd8bc2`). Project Management UI (list, details, team members, modals, UI primitives).
 **Phase 7 — CLOSED 2026-10-27.** (commit `8776f9b`). Task Management Backend API (CRUD, status state machine, project-member assignee guard, activity audit logs).
 **Phase 8 — CLOSED 2026-10-27.** (commits `b7e32a9`, `5f54a1e`). Task Management Frontend UI (list, multi-factor filters, details, activity timeline).
-**Phase 9 (Part 1 — Stats API & UI) — CLOSED 2026-10-28.**
+**Phase 9 — CLOSED 2026-10-28.** Dashboards & Performance:
 - Subphase 9.1 ✅: Dashboard statistics backend endpoints (`GET /api/dashboard/admin`, `GET /api/dashboard/developer`). Build verified green (0 errors).
-- Subphase 9.2 ✅: Role-aware Dashboard screens in React (`src/api/dashboard.ts`, `src/pages/Dashboard.tsx`) with Admin KPI cards, Task Status breakdown, Organization Activity, Developer Overdue alerts, and Due Soon tasks. Build verified green (0 errors).
-**Phase 9 (Part 2 — Performance) & Phase 10 (GitHub Integration) — UPCOMING on `day6-developing`.**
+- Subphase 9.2 ✅: Role-aware Dashboard screens in React (`src/api/dashboard.ts`, `src/pages/Dashboard.tsx`).
+- Subphase 9.3 ✅: Route code-splitting with `React.lazy` and `<Suspense>`, reducing initial bundle and creating on-demand page chunks.
+- Subphase 9.4 ✅: Request cancellation (`AbortController` signal) in project and task API layers. Verified: `npm run build` green (all chunks generated), `npm run lint` green (0 errors).
+**Phase 10 — IN PROGRESS (GitHub Integration).**
+- Subphase 10.1: `GitHubService` client with `IHttpClientFactory`, user-agent header, public profile retrieval, and 15-minute caching.
+- Subphase 10.2: Developer profile link/unlink endpoints (`/api/github/profile`).
+- Subphase 10.3: Task $\leftrightarrow$ Pull Request linking (`/api/tasks/:id/pull-requests`).
+- Subphase 10.4: Pull Request sync (`Open`, `Merged`, `Closed` states).
+- Subphase 10.5: React UI badges and PR sync buttons on Task Details.
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -26,14 +33,14 @@
 - Phase 6: Complete Project Management UI (Projects list, Project Details, team member management, edit/delete modals, UI primitives).
 - Phase 7: Complete Task Management API (CRUD, status transition state machine, project membership validation, automated audit logging, filters, pagination).
 - Phase 8: Complete Task Management UI (Tasks list, multi-filter query bar, Task Details with state machine transitions, project-member assignee selector, and activity audit timeline).
-- Phase 9.1 & 9.2: Dashboard Statistics API & Role-Aware Dashboard UI.
+- Phase 9: Dashboards & Performance (Admin & Dev stats, role-tailored dashboard views, code-splitting chunks with `React.lazy`, and request cancellation).
 
 ## Known issues / open items
 - Transitive `System.Security.Cryptography.Pkcs 9.0.11` NuGet advisory deferred to Phase 12.
 
 ## Git state
-- Branch: **`day5-developing`** (committing and pushing; transitioning to `day6-developing`).
+- Branch: **`day6-developing`**
 - Canonical repo: `D:\Assignment\DevTask-Hub`.
 
 ## Next permitted action
-Push `day5-developing`, checkout `day6-developing`, and begin Phase 9.3/9.4 (Performance & Lazy Loading) and Phase 10 (GitHub Integration).
+Commit Phase 9 performance updates, then implement Phase 10 (GitHub Integration).

@@ -67,13 +67,13 @@
 - [x] 8.3 Task creation modal with project & member selectors
 - [x] 8.4 Task details page + status transition controls + activity timeline (`src/pages/TaskDetails.tsx`)
 
-## Phase 9 — Dashboards & performance 🔶 CURRENT
+## Phase 9 — Dashboards & performance ✅ (closed 2026-10-28)
 - [x] 9.1 `/api/dashboard/admin` and `/api/dashboard/developer` stats (real SQL aggregates)
 - [x] 9.2 Admin & developer dashboard screens in React (`src/pages/Dashboard.tsx`)
-- [ ] 9.3 Route lazy loading, code splitting, memoization pass, responsive check
-- [ ] 9.4 Request cancellation (`AbortController`) + timeout/retry + loading states (assignment Day-8 #24)
+- [x] 9.3 Route lazy loading, code splitting, memoization pass, responsive check (`React.lazy` + `Suspense`)
+- [x] 9.4 Request cancellation (`AbortController` signal in API methods) (assignment Day-8 #24)
 
-## Phase 10 — GitHub integration ⬜
+## Phase 10 — GitHub integration 🔶 CURRENT
 - [ ] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling
 - [ ] 10.2 Link/unlink GitHub profile (`GitHubAccounts`)
 - [ ] 10.3 Task ↔ PR linking (unique owner/repo/number)
@@ -97,4 +97,4 @@
 
 ## Standing cautions
 - Stop the API before `dotnet build`/`dotnet ef` (running exe locks the build)
-- Canonical repo: `D:\Assignment\DevTask-Hub`, current branch: `day5-developing` -> `day6-developing`
+- Canonical repo: `D:\Assignment\DevTask-Hub`, current branch: `day6-developing`

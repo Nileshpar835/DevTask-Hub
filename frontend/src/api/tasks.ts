@@ -77,8 +77,15 @@ export interface TaskQueryParams {
     search?: string;
     mine?: boolean;
 }
-export async function fetchTasks(params: TaskQueryParams = {}): Promise<PagedResult<TaskSummary>> {
-    const { data } = await api.get<PagedResult<TaskSummary>>("/tasks", { params });
+
+export async function fetchTasks(
+    params: TaskQueryParams = {},
+    signal?: AbortSignal
+): Promise<PagedResult<TaskSummary>> {
+    const { data } = await api.get<PagedResult<TaskSummary>>("/tasks", {
+        params,
+        signal
+    });
     return data;
 }
 

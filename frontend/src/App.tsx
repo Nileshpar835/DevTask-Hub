@@ -1,51 +1,62 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
+import { ProtectedRoute, RequireRole } from "./components/Guards";
 import Layout from "./components/Layout";
 import {
-   ProjectForm,
-  ProjectMembers, TaskCreate, Users, Profile,
+  ProjectForm, ProjectMembers, TaskCreate, Users, Profile,
   Forbidden, NotFound,
 } from "./pages/Placeholders";
 import "./App.css";
-import { AuthProvider } from "./context/AuthContext";
-import { RequireRole } from "./components/Guards";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Projects from "./pages/Projects";
-import ProjectDetails from "./pages/ProjectDetails";
-import Tasks from "./pages/Tasks";
-import TaskDetails from "./pages/TaskDetails";
-import Dashboard from "./pages/Dashboard";
+
+// Lazy-loaded route chunks (code splitting)
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Projects = lazy(() => import("./pages/Projects"));
+const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const TaskDetails = lazy(() => import("./pages/TaskDetails"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Auth pages render standalone, no sidebar */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <Suspense fallback={<div className="page-state" style={{ padding: "40px", textAlign: "center" }}>Loading view…</div>}>
+            <Routes>
+              {/* Public Auth Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          {/* Everything else lives inside the shell */}
-          <Route element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="projects" element={<Projects />} />
-            <Route path="projects/new" element={<ProjectForm />} />
-            <Route path="projects/:id" element={<ProjectDetails />} />
-            <Route path="projects/:id/edit" element={<ProjectForm />} />
-            <Route path="projects/:id/members" element={<ProjectMembers />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="tasks/new" element={<TaskCreate />} />
-            <Route path="tasks/:id" element={<TaskDetails />} />
-            <Route element={<RequireRole role="Admin" />}>
-              <Route path="users" element={<Users />} />
-            </Route>
-            {/* <Route path="users" element={<Users />} /> */}
-            <Route path="profile" element={<Profile />} />
-            <Route path="403" element={<Forbidden />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+              {/* Protected Routes inside Layout Shell */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="projects" element={<Projects />} />
+                  <Route path="projects/new" element={<ProjectForm />} />
+                  <Route path="projects/:id" element={<ProjectDetails />} />
+                  <Route path="projects/:id/edit" element={<ProjectForm />} />
+                  <Route path="projects/:id/members" element={<ProjectMembers />} />
+                  <Route path="tasks" element={<Tasks />} />
+                  <Route path="tasks/new" element={<TaskCreate />} />
+                  <Route path="tasks/:id" element={<TaskDetails />} />
+                  
+                  {/* Admin Only Route */}
+                  <Route element={<RequireRole role="Admin" />}>
+                    <Route path="users" element={<Users />} />
+                  </Route>
+
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="403" element={<Forbidden />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
