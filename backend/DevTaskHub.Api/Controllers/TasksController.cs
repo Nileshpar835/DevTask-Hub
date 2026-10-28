@@ -13,10 +13,12 @@ namespace DevTaskHub.Api.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly ITaskService _tasks;
+    private readonly IGitHubService _github;
 
-    public TasksController(ITaskService tasks)
+    public TasksController(ITaskService tasks, IGitHubService github)
     {
         _tasks = tasks;
+        _github = github;
     }
 
     [HttpGet]
@@ -99,5 +101,38 @@ public class TasksController : ControllerBase
             User.FindFirstValue(ClaimTypes.Role) == UserRole.Admin.ToString();
 
         return (userId, isAdmin);
+    }
+
+    [HttpGet("{id:int}/pull-requests")]
+    public async Task<ActionResult<IReadOnlyList<PullRequestDto>>> GetPullRequests(int id, CancellationToken ct)
+    {
+        var (userId, isAdmin) = GetCurrentUserInfo();
+        var prs = await _github.GetTaskPullRequestsAsync(id, userId, isAdmin, ct);
+        return Ok(prs);
+    }
+
+    [HttpPost("{id:int}/pull-requests")]
+    public async Task<ActionResult<PullRequestDto>> LinkPullRequest(
+        int id, [FromBody] LinkPullRequestRequest request, CancellationToken ct)
+    {
+        var (userId, isAdmin) = GetCurrentUserInfo();
+        var pr = await _github.LinkPullRequestAsync(id, request.Url, userId, isAdmin, ct);
+        return CreatedAtAction(nameof(GetPullRequests), new { id }, pr);
+    }
+
+    [HttpPost("{id:int}/pull-requests/{prId:int}/sync")]
+    public async Task<ActionResult<PullRequestDto>> SyncPullRequest(int id, int prId, CancellationToken ct)
+    {
+        var (userId, isAdmin) = GetCurrentUserInfo();
+        var pr = await _github.SyncPullRequestAsync(id, prId, userId, isAdmin, ct);
+        return Ok(pr);
+    }
+
+    [HttpDelete("{id:int}/pull-requests/{prId:int}")]
+    public async Task<IActionResult> UnlinkPullRequest(int id, int prId, CancellationToken ct)
+    {
+        var (userId, isAdmin) = GetCurrentUserInfo();
+        await _github.UnlinkPullRequestAsync(id, prId, userId, isAdmin, ct);
+        return NoContent();
     }
 }

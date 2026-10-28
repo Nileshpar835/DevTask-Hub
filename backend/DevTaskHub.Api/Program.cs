@@ -14,6 +14,13 @@ using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpClient("GitHub", client =>
+{
+    client.BaseAddress = new Uri("https://api.github.com/");
+    client.DefaultRequestHeaders.Add("User-Agent", "DevTaskHub-App");
+    client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+});
+
 builder.Services.AddOpenApi();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -82,10 +89,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProjectService, ProjectService>(); // <-- Add this
 builder.Services.AddScoped<ITaskService, TaskService>(); // <-- Add this
-builder.Services.AddScoped<IDashboardService, DashboardService>(); // <-- Add thisss
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IGitHubService, GitHubService>(); // <-- Add this
 
 var app = builder.Build();
-
 
 if (app.Environment.IsDevelopment())
 {
