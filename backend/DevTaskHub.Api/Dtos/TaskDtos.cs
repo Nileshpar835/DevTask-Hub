@@ -5,20 +5,21 @@ using DevTaskHub.Api.Domain;
 namespace DevTaskHub.Api.Dtos;
 
 public record CreateTaskRequest(
-    [Required]
-    int ProjectId,
+    [Required] int ProjectId,
     [Required, MaxLength(200)] string Title,
     [MaxLength(4000)] string? Description,
     [Required] TaskItemPriority Priority,
     DateTime? DueDateUtc,
-    int? AssigneeUserId = null
+    int? AssigneeUserId = null,
+    [MaxLength(50)] string? Category = null
 );
 
 public record UpdateTaskRequest(
     [Required, MaxLength(200)] string Title,
     [MaxLength(4000)] string? Description,
     [Required] TaskItemPriority Priority,
-    DateTime? DueDateUtc
+    DateTime? DueDateUtc,
+    [MaxLength(50)] string? Category = null
 );
 
 public record ChangeTaskStatusRequest(
@@ -44,7 +45,8 @@ public record TaskSummaryDto(
     DateTime? DueDateUtc,
     DateTime? CompletedAtUtc,
     DateTime CreatedAtUtc,
-    DateTime UpdatedAtUtc
+    DateTime UpdatedAtUtc,
+    string? Category
 );
 
 public record TaskDetailDto(
@@ -63,7 +65,8 @@ public record TaskDetailDto(
     DateTime? DueDateUtc,
     DateTime? CompletedAtUtc,
     DateTime CreatedAtUtc,
-    DateTime UpdatedAtUtc
+    DateTime UpdatedAtUtc,
+    string? Category
 );
 
 public record TaskActivityLogDto(
@@ -91,6 +94,7 @@ public class TaskQueryParameters
     public int? AssigneeId { get; set; }
     public TaskItemStatus? Status { get; set; }
     public TaskItemPriority? Priority { get; set; }
+    public string? Category { get; set; }
     public string? Search { get; set; }
     public bool? Mine { get; set; }
 }

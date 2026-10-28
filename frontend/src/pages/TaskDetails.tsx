@@ -8,6 +8,7 @@ import {
   assignTask,
   deleteTask,
   fetchTaskActivity,
+  fetchTaskCategories,
   type TaskDetail,
   type TaskStatus,
   type TaskPriority,
@@ -63,6 +64,10 @@ export default function TaskDetails() {
   const [editDesc, setEditDesc] = useState("");
   const [editPriority, setEditPriority] = useState<TaskPriority>("Medium");
   const [editDueDate, setEditDueDate] = useState("");
+  const [editCategory, setEditCategory] = useState("Feature");
+  const [categories, setCategories] = useState<string[]>(["Feature", "Bug", "Update", "Refactor", "Documentation"]);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategoryName, setCustomCategoryName] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -90,6 +95,10 @@ export default function TaskDetails() {
       setEditDesc(data.description || "");
       setEditPriority(data.priority);
       setEditDueDate(data.dueDateUtc ? data.dueDateUtc.slice(0, 10) : "");
+      setEditCategory(data.category || "Feature");
+      fetchTaskCategories().then(cats => {
+        if (cats && cats.length > 0) setCategories(cats);
+      }).catch(() => {});
 
       // Concurrently load project members and activity
       const [membersData, activityData] = await Promise.all([
@@ -273,12 +282,17 @@ export default function TaskDetails() {
     setSavingEdit(true);
     setEditError(null);
     try {
+      const finalCategory = isCustomCategory ? customCategoryName.trim() : editCategory;
       const updated = await updateTask(taskId, {
         title: editTitle.trim(),
         description: editDesc.trim() || undefined,
         priority: editPriority,
+        category: finalCategory || undefined,
         dueDateUtc: editDueDate ? new Date(editDueDate).toISOString() : undefined,
       });
+      if (finalCategory && !categories.includes(finalCategory)) {
+        setCategories(prev => [...prev, finalCategory]);
+      }
       setTask(updated);
       setIsEditOpen(false);
       const newActivity = await fetchTaskActivity(taskId);
@@ -349,6 +363,11 @@ export default function TaskDetails() {
           <Link to="/tasks" className="back-link">← All Tasks</Link>
           <div className="project-header-title">
             <span className="project-key">{task.projectKey}</span>
+            {task.category && (
+              <span className={`category-chip cat-${task.category.toLowerCase()}`} style={{ marginLeft: "8px" }}>
+                🏷️ {task.category}
+              </span>
+            )}
             <h2>{task.title}</h2>
           </div>
         </div>
@@ -671,6 +690,58 @@ export default function TaskDetails() {
               />
             </div>
           </div>
+
+          <div className="field">
+            <label htmlFor="edit-task-category">Category</label>
+            <select
+              id="edit-task-category"
+              className="filter-select"
+              style={{ width: "100%", padding: "8px" }}
+              value={isCustomCategory ? "__CUSTOM__" : editCategory}
+              onChange={(e) => {
+                if (e.target.value === "__CUSTOM__") {
+                  setIsCustomCategory(true);
+                } else {
+                  setIsCustomCategory(false);
+                  setEditCategory(e.target.value);
+                }
+              }}
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+              <option value="__CUSTOM__">+ Create new category…</option>
+            </select>
+          </div>
+
+          {isCustomCategory && (
+            <div className="field">
+              <label htmlFor="edit-custom-cat">New Category Name</label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  id="edit-custom-cat"
+                  type="text"
+                  placeholder="e.g. Design, DevOps, QA"
+                  maxLength={50}
+                  value={customCategoryName}
+                  onChange={(e) => setCustomCategoryName(e.target.value)}
+                  style={{ flex: 1 }}
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setIsCustomCategory(false);
+                    setCustomCategoryName("");
+                  }}
+                  style={{ fontSize: "12px" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="modal-actions">
             <button type="button" className="btn" onClick={() => setIsEditOpen(false)}>

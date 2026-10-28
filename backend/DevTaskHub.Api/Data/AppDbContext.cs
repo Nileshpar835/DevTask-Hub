@@ -79,6 +79,7 @@ public class AppDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Title).HasMaxLength(200).IsRequired();
             e.Property(x => x.Description).HasMaxLength(4000);
+            e.Property(x => x.Category).HasMaxLength(50);
             e.Property(x => x.Status).HasMaxLength(20).HasConversion<string>().IsRequired();
             e.Property(x => x.Priority).HasMaxLength(10).HasConversion<string>().IsRequired();
             e.Property(x => x.DueDateUtc);

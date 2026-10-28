@@ -242,6 +242,10 @@ namespace DevTaskHub.Api.Migrations
                     b.Property<int?>("AssigneeUserId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("datetime2");
 

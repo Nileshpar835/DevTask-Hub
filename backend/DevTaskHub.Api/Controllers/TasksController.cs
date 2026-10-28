@@ -30,6 +30,13 @@ public class TasksController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("categories")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetCategories(CancellationToken ct)
+    {
+        var result = await _tasks.GetCategoriesAsync(ct);
+        return Ok(result);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskDetailDto>> GetTaskById(int id, CancellationToken ct)
     {

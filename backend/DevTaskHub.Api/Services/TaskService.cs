@@ -51,6 +51,11 @@ public class TaskService : ITaskService
             q = q.Where(t => t.Priority == query.Priority.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(query.Category))
+        {
+            q = q.Where(t => t.Category == query.Category);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var term = query.Search.Trim().ToLower();
@@ -79,7 +84,8 @@ public class TaskService : ITaskService
                 t.DueDateUtc,
                 t.CompletedAtUtc,
                 t.CreatedAtUtc,
-                t.UpdatedAtUtc
+                t.UpdatedAtUtc,
+                t.Category
             ))
             .ToListAsync(ct);
 
@@ -130,6 +136,7 @@ public class TaskService : ITaskService
             ProjectId = request.ProjectId,
             Title = request.Title.Trim(),
             Description = request.Description?.Trim(),
+            Category = !string.IsNullOrWhiteSpace(request.Category) ? request.Category.Trim() : "Feature",
             Priority = request.Priority,
             Status = TaskItemStatus.ToDo,
             AssigneeUserId = request.AssigneeUserId,
@@ -183,6 +190,11 @@ public class TaskService : ITaskService
             task.Priority = request.Priority;
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Category) && task.Category != request.Category.Trim())
+        {
+            task.Category = request.Category.Trim();
+        }
+
         if (task.DueDateUtc != request.DueDateUtc)
         {
             await LogActivityAsync(task.Id, task.ProjectId, TaskActivityAction.DueDateChanged, task.DueDateUtc?.ToString("o"), request.DueDateUtc?.ToString("o"), currentUserId, ct);
@@ -226,27 +238,30 @@ public class TaskService : ITaskService
 
         if (!isValid)
         {
-            throw new ArgumentException($"Invalid status transition from '{currentStatus}' to '{targetStatus}'.");
+            throw new InvalidOperationException($"Invalid status transition from {currentStatus} to {targetStatus}.");
         }
 
         task.Status = targetStatus;
-        task.UpdatedAtUtc = DateTime.UtcNow;
-
         if (targetStatus == TaskItemStatus.Done)
         {
             task.CompletedAtUtc = DateTime.UtcNow;
         }
         else if (currentStatus == TaskItemStatus.Done)
         {
-            task.CompletedAtUtc = null;
+            task.CompletedAtUtc = null; // Reopened
         }
 
-        var action = (currentStatus == TaskItemStatus.Done && targetStatus == TaskItemStatus.InProgress)
-            ? TaskActivityAction.Reopened
-            : TaskActivityAction.StatusChanged;
+        task.UpdatedAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+
+        var action = (currentStatus, targetStatus) switch
+        {
+            (TaskItemStatus.Done, TaskItemStatus.InProgress) => TaskActivityAction.Reopened,
+            
+            _ => TaskActivityAction.StatusChanged
+        };
 
         await LogActivityAsync(task.Id, task.ProjectId, action, currentStatus.ToString(), targetStatus.ToString(), currentUserId, ct);
-        await _db.SaveChangesAsync(ct);
 
         return await GetTaskByIdAsync(task.Id, currentUserId, isAdmin, ct);
     }
@@ -257,38 +272,33 @@ public class TaskService : ITaskService
         var task = await _db.Tasks
             .Include(t => t.Project)
                 .ThenInclude(p => p.Members)
-            .Include(t => t.Assignee)
             .FirstOrDefaultAsync(t => t.Id == id, ct)
             ?? throw new KeyNotFoundException($"Task #{id} not found.");
 
         ValidateProjectAccess(task.Project, currentUserId, isAdmin);
 
-        if (task.AssigneeUserId == request.AssigneeUserId)
+        if (task.AssigneeUserId == request.AssigneeUserId) return await GetTaskByIdAsync(task.Id, currentUserId, isAdmin, ct);
+
+        string? oldAssigneeName = null;
+        if (task.AssigneeUserId.HasValue)
         {
-            return await GetTaskByIdAsync(task.Id, currentUserId, isAdmin, ct);
+            var oldAssignee = await _db.Users.FindAsync([task.AssigneeUserId.Value], ct);
+            oldAssigneeName = oldAssignee?.FullName;
         }
 
-        var oldAssigneeName = task.Assignee?.FullName;
         string? newAssigneeName = null;
-
         if (request.AssigneeUserId.HasValue)
         {
             ValidateAssigneeMembership(task.Project, request.AssigneeUserId.Value);
-            var newAssignee = await _db.Users.FindAsync([request.AssigneeUserId.Value], ct)
-                ?? throw new KeyNotFoundException($"User #{request.AssigneeUserId.Value} not found.");
-            newAssigneeName = newAssignee.FullName;
-            task.AssigneeUserId = request.AssigneeUserId.Value;
-
-            await LogActivityAsync(task.Id, task.ProjectId, TaskActivityAction.Assigned, oldAssigneeName, newAssigneeName, currentUserId, ct);
-        }
-        else
-        {
-            task.AssigneeUserId = null;
-            await LogActivityAsync(task.Id, task.ProjectId, TaskActivityAction.Unassigned, oldAssigneeName, null, currentUserId, ct);
+            var newAssignee = await _db.Users.FindAsync([request.AssigneeUserId.Value], ct);
+            newAssigneeName = newAssignee?.FullName;
         }
 
+        task.AssigneeUserId = request.AssigneeUserId;
         task.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
+
+        await LogActivityAsync(task.Id, task.ProjectId, TaskActivityAction.Assigned, oldAssigneeName, newAssigneeName, currentUserId, ct);
 
         return await GetTaskByIdAsync(task.Id, currentUserId, isAdmin, ct);
     }
@@ -302,6 +312,14 @@ public class TaskService : ITaskService
 
         ValidateProjectAccess(task.Project, currentUserId, isAdmin);
 
+        // Rule: Only Project Owner, Task Creator, or System Admin can delete a task
+        var isOwner = task.Project.OwnerUserId == currentUserId;
+        var isCreator = task.CreatedByUserId == currentUserId;
+        if (!isAdmin && !isOwner && !isCreator)
+        {
+            throw new UnauthorizedAccessException("Only the Project Owner, Task Creator, or an Admin can delete this task.");
+        }
+
         _db.Tasks.Remove(task);
         await _db.SaveChangesAsync(ct);
     }
@@ -310,6 +328,7 @@ public class TaskService : ITaskService
         int taskId, int currentUserId, bool isAdmin, CancellationToken ct)
     {
         var task = await _db.Tasks
+            .AsNoTracking()
             .Include(t => t.Project)
                 .ThenInclude(p => p.Members)
             .FirstOrDefaultAsync(t => t.Id == taskId, ct)
@@ -334,19 +353,35 @@ public class TaskService : ITaskService
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<string>> GetCategoriesAsync(CancellationToken ct)
+    {
+        var defaults = new List<string> { "Feature", "Bug", "Update", "Refactor", "Documentation" };
+        var fromDb = await _db.Tasks
+            .AsNoTracking()
+            .Where(t => !string.IsNullOrEmpty(t.Category))
+            .Select(t => t.Category!)
+            .Distinct()
+            .ToListAsync(ct);
+
+        return defaults.Union(fromDb, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
     private static void ValidateProjectAccess(Project project, int userId, bool isAdmin)
     {
         if (isAdmin) return;
-        if (project.OwnerUserId == userId || project.Members.Any(m => m.UserId == userId)) return;
-        throw new UnauthorizedAccessException("You do not have access to tasks in this project.");
+        var hasAccess = project.OwnerUserId == userId || project.Members.Any(m => m.UserId == userId);
+        if (!hasAccess)
+        {
+            throw new UnauthorizedAccessException("You are not a member of this project.");
+        }
     }
 
-    private static void ValidateAssigneeMembership(Project project, int assigneeUserId)
+    private static void ValidateAssigneeMembership(Project project, int assigneeId)
     {
-        var isMember = project.OwnerUserId == assigneeUserId || project.Members.Any(m => m.UserId == assigneeUserId);
+        var isMember = project.OwnerUserId == assigneeId || project.Members.Any(m => m.UserId == assigneeId);
         if (!isMember)
         {
-            throw new ArgumentException("The assigned user must be a member of the project.");
+            throw new InvalidOperationException("Task assignee must be a member of the project.");
         }
     }
 
@@ -384,6 +419,7 @@ public class TaskService : ITaskService
             task.DueDateUtc,
             task.CompletedAtUtc,
             task.CreatedAtUtc,
-            task.UpdatedAtUtc
+            task.UpdatedAtUtc,
+            task.Category
         );
 }

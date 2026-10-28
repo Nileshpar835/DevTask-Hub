@@ -5,6 +5,7 @@ import {
   fetchTasks, 
   createTask, 
   changeTaskStatus,
+  fetchTaskCategories,
   type TaskSummary, 
   type TaskStatus, 
   type TaskPriority, 
@@ -40,6 +41,8 @@ function isOverdue(isoDate: string, status: TaskStatus): boolean {
   return new Date(isoDate) < new Date();
 }
 
+const DEFAULT_CATEGORIES = ["Feature", "Bug", "Update", "Refactor", "Documentation"];
+
 export default function Tasks() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialProjectId = searchParams.get("projectId") ? Number(searchParams.get("projectId")) : "";
@@ -52,14 +55,16 @@ export default function Tasks() {
   const [error, setError] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
 
-  // Projects list for filter dropdown and create modal
+  // Projects & Categories list
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
 
   // Query & Filter States
   const [search, setSearch] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState<number | "">(initialProjectId);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "">("");
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "">("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [mineOnly, setMineOnly] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -70,16 +75,27 @@ export default function Tasks() {
   const [modalTitle, setModalTitle] = useState("");
   const [modalDesc, setModalDesc] = useState("");
   const [modalPriority, setModalPriority] = useState<TaskPriority>("Medium");
+  const [modalCategory, setModalCategory] = useState("Feature");
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategoryName, setCustomCategoryName] = useState("");
   const [modalAssigneeId, setModalAssigneeId] = useState<number | "">("");
   const [modalDueDate, setModalDueDate] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Load available projects
+  // Load available projects and categories
   useEffect(() => {
     fetchProjects({ pageSize: 100 })
       .then(res => setProjects(res.items))
       .catch(() => setProjects([]));
+
+    fetchTaskCategories()
+      .then(cats => {
+        if (cats && cats.length > 0) {
+          setCategories(cats);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // When project selected in create modal, load its members
@@ -107,6 +123,7 @@ export default function Tasks() {
         projectId: selectedProjectId !== "" ? Number(selectedProjectId) : undefined,
         status: statusFilter || undefined,
         priority: priorityFilter || undefined,
+        category: categoryFilter || undefined,
         mine: mineOnly || undefined,
       });
       setData(res);
@@ -119,7 +136,7 @@ export default function Tasks() {
     } finally {
       setLoading(false);
     }
-  }, [viewMode, page, search, selectedProjectId, statusFilter, priorityFilter, mineOnly]);
+  }, [viewMode, page, search, selectedProjectId, statusFilter, priorityFilter, categoryFilter, mineOnly]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -131,6 +148,7 @@ export default function Tasks() {
     setSelectedProjectId("");
     setStatusFilter("");
     setPriorityFilter("");
+    setCategoryFilter("");
     setMineOnly(false);
     setPage(1);
     setSearchParams({});
@@ -138,6 +156,9 @@ export default function Tasks() {
 
   function openCreateModal() {
     setModalProjectId(selectedProjectId !== "" ? selectedProjectId : (projects[0]?.id ?? ""));
+    setIsCustomCategory(false);
+    setCustomCategoryName("");
+    setModalCategory("Feature");
     setIsModalOpen(true);
   }
 
@@ -152,6 +173,12 @@ export default function Tasks() {
       return;
     }
 
+    const finalCategory = isCustomCategory ? customCategoryName.trim() : modalCategory;
+    if (isCustomCategory && !finalCategory) {
+      setFormError("Please enter a category name or choose an existing one.");
+      return;
+    }
+
     setSubmitting(true);
     setFormError(null);
     try {
@@ -160,13 +187,22 @@ export default function Tasks() {
         title: modalTitle.trim(),
         description: modalDesc.trim() || undefined,
         priority: modalPriority,
+        category: finalCategory || "Feature",
         assigneeUserId: modalAssigneeId !== "" ? Number(modalAssigneeId) : undefined,
         dueDateUtc: modalDueDate ? new Date(modalDueDate).toISOString() : undefined,
       });
+
+      if (finalCategory && !categories.includes(finalCategory)) {
+        setCategories(prev => [...prev, finalCategory]);
+      }
+
       setIsModalOpen(false);
       setModalTitle("");
       setModalDesc("");
       setModalPriority("Medium");
+      setModalCategory("Feature");
+      setIsCustomCategory(false);
+      setCustomCategoryName("");
       setModalAssigneeId("");
       setModalDueDate("");
       loadTasks();
@@ -255,6 +291,14 @@ export default function Tasks() {
             </span>
           )}
         </div>
+
+        {task.category && (
+          <div className="card-category-row">
+            <span className={`category-chip cat-${task.category.toLowerCase()}`}>
+              🏷️ {task.category}
+            </span>
+          </div>
+        )}
 
         <div className="card-bottom-row">
           <div className="card-assignee-group">
@@ -395,6 +439,17 @@ export default function Tasks() {
 
           <select
             className="kanban-filter-select"
+            value={categoryFilter}
+            onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+          >
+            <option value="">🏷️ Category</option>
+            {categories.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
+          <select
+            className="kanban-filter-select"
             value={selectedProjectId}
             onChange={(e) => {
               const val = e.target.value ? Number(e.target.value) : "";
@@ -423,7 +478,7 @@ export default function Tasks() {
             </select>
           )}
 
-          {(search || selectedProjectId !== "" || statusFilter || priorityFilter || mineOnly) && (
+          {(search || selectedProjectId !== "" || statusFilter || priorityFilter || categoryFilter || mineOnly) && (
             <button
               type="button"
               className="btn-clear-filters"
@@ -587,6 +642,7 @@ export default function Tasks() {
                 <thead>
                   <tr>
                     <th>Task</th>
+                    <th>Category</th>
                     <th>Project</th>
                     <th>Status</th>
                     <th>Priority</th>
@@ -601,6 +657,15 @@ export default function Tasks() {
                         <Link to={`/tasks/${task.id}`} className="task-row-link">
                           <strong>{task.title}</strong>
                         </Link>
+                      </td>
+                      <td>
+                        {task.category ? (
+                          <span className={`category-chip cat-${task.category.toLowerCase()}`}>
+                            🏷️ {task.category}
+                          </span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
                       </td>
                       <td>
                         <span className="project-key">{task.projectKey}</span>
@@ -699,6 +764,60 @@ export default function Tasks() {
             </div>
 
             <div className="field">
+              <label htmlFor="task-category">Category</label>
+              <select
+                id="task-category"
+                className="filter-select"
+                style={{ width: "100%", padding: "8px" }}
+                value={isCustomCategory ? "__CUSTOM__" : modalCategory}
+                onChange={(e) => {
+                  if (e.target.value === "__CUSTOM__") {
+                    setIsCustomCategory(true);
+                  } else {
+                    setIsCustomCategory(false);
+                    setModalCategory(e.target.value);
+                  }
+                }}
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                <option value="__CUSTOM__">+ Create new category…</option>
+              </select>
+            </div>
+          </div>
+
+          {isCustomCategory && (
+            <div className="field">
+              <label htmlFor="new-category-input">New Category Name</label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  id="new-category-input"
+                  type="text"
+                  placeholder="e.g. Design, DevOps, QA, Research"
+                  maxLength={50}
+                  value={customCategoryName}
+                  onChange={(e) => setCustomCategoryName(e.target.value)}
+                  style={{ flex: 1 }}
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setIsCustomCategory(false);
+                    setCustomCategoryName("");
+                  }}
+                  style={{ fontSize: "12px" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className="field">
               <label htmlFor="task-assignee">Assignee</label>
               <select
                 id="task-assignee"
@@ -713,16 +832,16 @@ export default function Tasks() {
                 ))}
               </select>
             </div>
-          </div>
 
-          <div className="field">
-            <label htmlFor="task-due">Due Date (optional)</label>
-            <input
-              id="task-due"
-              type="date"
-              value={modalDueDate}
-              onChange={(e) => setModalDueDate(e.target.value)}
-            />
+            <div className="field">
+              <label htmlFor="task-due">Due Date (optional)</label>
+              <input
+                id="task-due"
+                type="date"
+                value={modalDueDate}
+                onChange={(e) => setModalDueDate(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="modal-actions">
