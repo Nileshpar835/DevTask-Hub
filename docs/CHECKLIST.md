@@ -30,92 +30,71 @@
 ## Phase 3 — Authentication & authorization ✅ (closed 2026-10-23)
 - [x] 3.1 Register/login + PBKDF2 hashing (`PasswordHasher`) + DTO validation — verified: real `AQAAAA...` hashes in DB
 - [x] 3.2 JWT + refresh rotation + `/me` + secure admin seed — ✅ **verified 2026-10-23 (all 4 gates + reuse-detection passed against live API)**
-  - [x] JwtBearer package; `TokenService`; `DbSeeder`; auth pipeline in Program.cs (`UseAuthentication`→`UseAuthorization`)
-  - [x] Refresh-token rotation logic + reuse detection in `AuthService`
-  - [x] Cookie flags: HttpOnly, SameSite=Lax, Path=/api/auth
-  - [x] DTO record validation attributes on constructor parameters (500 fixed)
-  - [x] `Jwt` Issuer/Audience block in appsettings.json (token now carries `aud`)
-  - [x] `SeedInitialAdmin` removed from AppDbContext "for real"; migration `5_DeleteSeedAdminRow` (`DeleteData`) applied — plaintext row deleted
-  - [x] Fix C: `TokenService.cs` L40 `Jwr:Issuer` → `Jwt:Issuer` (token now carries `iss`)
-  - [x] App restarted → `DbSeeder` created hashed admin (row Id=4, `AQAAAA...` hash)
-  - [x] 4-gate retest PASSED: dev `/me` 200 · admin login 200/Role=Admin · no-token 401 + short-password 400 · login→refresh→logout→401 cycle · rotated-token replay → 401
-- [x] 3.3 Swagger "Authorize" button + role-gated endpoint demo — ✅ **verified by assistant 2026-10-23:** `GET /api/users` anon → **401**, dev → **403**, admin → **200 (3 users)**; `/swagger/v1/swagger.json` contains `components.securitySchemes.Bearer` + global `security` requirement (Authorize button renders & injects header). Browser click-test left to user; 3.3 code landed in commit `ffd8575` (message says "fix(auth)" — content verified regardless).
+- [x] 3.3 Swagger "Authorize" button + role-gated endpoint demo — ✅ **verified by assistant 2026-10-23**
 
-## Phase 4 — Frontend foundation & authentication 🔶 CURRENT
-- [x] App layout + sidebar/topbar nav — ✅ **4.1 verified 2026-10-23:** `npm run build` green (tsc+vite, 27 modules), commit `13d139a`; react-router-dom 7.18.4; eyeball pass (nav/404/hamburger) folded into 4.2 browser test
-- [x] Axios client with bearer header + 401 interceptor — ✅ **verified 2026-10-23:** CORS preflight `OPTIONS` → **204** + `allow-origin: http://localhost:5173` + `allow-credentials: true` (live API test); frontend build green; commits `661d810`/`cd6a94e`
-- [x] Auth context (access token in memory, `/me` hydration, logout) — ✅ verified: `AuthProvider` wraps app (App.tsx L13), boot via `/auth/refresh`+`/me`, single-flight refresh; commit `06bd025`. Browser session-restore/sign-out click-through folded into 4.3 test pass
-- [ ] Login & register forms (field validation, preserve input on error) — **4.3 ISSUED 2026-10-23**
-- [ ] Protected routes + role-aware nav + 401/403 pages — **4.3 ISSUED 2026-10-23**
-- [ ] Error boundary + API try/catch patterns (assignment Day-6 #19) — **4.3 ISSUED 2026-10-23**
+## Phase 4 — Frontend foundation & authentication ✅ (closed 2026-10-26)
+- [x] App layout + sidebar/topbar nav — ✅ **4.1 verified 2026-10-23**
+- [x] Axios client with bearer header + 401 interceptor — ✅ **4.2 verified 2026-10-23**
+- [x] Auth context (access token in memory, `/me` hydration, logout) — ✅ **verified**
+- [x] Login & register forms (field validation, preserve input on error) — ✅ **4.3 verified 2026-10-26:** commit `95de84e` on `day5-developing`
+- [x] Protected routes + role-aware nav + 401/403 pages — ✅ **4.3 verified 2026-10-26:** `ProtectedRoute`, `RequireRole`, role-filtered nav in Layout.tsx
+- [x] Error boundary + API try/catch patterns (assignment Day-6 #19) — ✅ **4.3 verified 2026-10-26:** `ErrorBoundary` class component
 
-## Phase 5 — Project management API ⬜
-- [ ] Global exception middleware + structured logging (assignment Day-3 #8 — backend plumbing, before CRUD)
-- [ ] Project DTOs + validation
-- [ ] CRUD service + endpoints (creator rights, delete rules)
-- [ ] Member add/remove with unique-constraint handling
-- [ ] Server-side filter/pagination (`search`, `status`, `mine`)
-- [ ] Authorization checks + xUnit integration tests (tests project created here)
+## Phase 5 — Project management API ✅ (closed 2026-10-26, commit `33cadef`)
+- [x] 5.1 Global exception middleware + structured logging (`ExceptionHandlingMiddleware`)
+- [x] 5.2 Project & Pagination DTOs + validation (`CommonDtos.cs`, `ProjectDtos.cs`)
+- [x] 5.3 CRUD service + endpoints (creator rights, delete rules) (`IProjectService`, `ProjectService`, `ProjectsController`)
+- [x] 5.4 Member add/remove with unique-constraint handling
+- [x] 5.5 Server-side filter/pagination (`search`, `status`, `mine`)
+- [x] 5.6 Verification pass & git commit (`33cadef`)
 
-## Phase 6 — Project management UI ⬜
-- [ ] Reusable components (Button, Input, Card, Table, Badge, Modal…) — assignment Day-5 #15; built per UI_PLAN "when first needed", plain CSS variables (not CSS Modules — UI_PLAN deviation, user-approved)
-- [ ] Controlled inputs + useState events (assignment Day-5 #16 — first real form is 6.3)
-- [ ] Project list (filters, pagination, loading/empty/error states)
-- [ ] Project details + stats
-- [ ] Create/edit forms
-- [ ] Member management UI
+## Phase 6 — Project management UI ✅ (closed 2026-10-27, commit `9bd8bc2`)
+- [x] 6.1 Project API client (`src/api/projects.ts`, `src/api/users.ts`)
+- [x] 6.2 Reusable components (`Badge`, `Modal`, `Pagination`) — assignment Day-5 #15
+- [x] 6.3 Projects list page (search, filters, pagination, loading/empty states, Create modal) — assignment Day-5 #16
+- [x] 6.4 Project details page & member management UI (`src/pages/ProjectDetails.tsx`)
 
-## Phase 7 — Task management API ⬜
-- [ ] Task DTOs + validation
-- [ ] CRUD + assignment rules (assignee must be project member)
-- [ ] Status transitions (ToDo→InProgress→InReview→Done, reopen rules) + `CompletedAtUtc`
-- [ ] Filter/sort/search/pagination
-- [ ] Activity logging on every mutation + tests
+## Phase 7 — Task management API ✅ (closed 2026-10-27, commit `8776f9b`)
+- [x] 7.1 Task DTOs + validation (`TaskDtos.cs`)
+- [x] 7.2 CRUD + assignment rules (assignee must be project member)
+- [x] 7.3 Status transitions state machine (ToDo→InProgress→InReview→Done, reopen rules) + `CompletedAtUtc`
+- [x] 7.4 Filter/sort/search/pagination (`projectId`, `assigneeId`, `status`, `priority`, `mine`)
+- [x] 7.5 Automated activity logging on every mutation (`TaskActivityLog`)
 
-## Phase 8 — Task management UI ⬜
-- [ ] Task list with filters/sort/pagination
-- [ ] Task details + activity timeline
-- [ ] Create/edit forms
-- [ ] Status/assignee controls reflecting transition rules
+## Phase 8 — Task management UI ✅ (closed 2026-10-27, commits `b7e32a9`, `5f54a1e`)
+- [x] 8.1 Task API client (`src/api/tasks.ts`)
+- [x] 8.2 Task list with filters/sort/pagination (`src/pages/Tasks.tsx`)
+- [x] 8.3 Task creation modal with project & member selectors
+- [x] 8.4 Task details page + status transition controls + activity timeline (`src/pages/TaskDetails.tsx`)
 
-## Phase 9 — Dashboards & performance ⬜
-- [ ] `/api/dashboard/admin` stats (real SQL aggregates)
-- [ ] `/api/dashboard/developer` stats
-- [ ] Admin + developer dashboard screens
-- [ ] Route lazy loading, code splitting, memoization pass, responsive check
-- [ ] Request cancellation (AbortController) + timeout/retry + loading states (assignment Day-8 #24)
+## Phase 9 — Dashboards & performance 🔶 CURRENT
+- [x] 9.1 `/api/dashboard/admin` and `/api/dashboard/developer` stats (real SQL aggregates)
+- [x] 9.2 Admin & developer dashboard screens in React (`src/pages/Dashboard.tsx`)
+- [ ] 9.3 Route lazy loading, code splitting, memoization pass, responsive check
+- [ ] 9.4 Request cancellation (`AbortController`) + timeout/retry + loading states (assignment Day-8 #24)
 
 ## Phase 10 — GitHub integration ⬜
-- [ ] `GitHub/` client: public profile lookup, rate-limit/ETag handling
-- [ ] Link/unlink GitHub profile (GitHubAccounts)
-- [ ] Task ↔ PR linking (unique owner/repo/number)
-- [ ] PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
-- [ ] UI: integration badges + last-sync display
+- [ ] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling
+- [ ] 10.2 Link/unlink GitHub profile (`GitHubAccounts`)
+- [ ] 10.3 Task ↔ PR linking (unique owner/repo/number)
+- [ ] 10.4 PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
+- [ ] 10.5 UI: integration badges + last-sync display
 
 ## Phase 11 — ASP.NET Core MVC review ⬜
-- [ ] Decide if any server-rendered page is justified (documented no-op allowed)
-- [ ] Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — implement if MVC route chosen, else document API-only deviation
+- [ ] 11.1 Decide if any server-rendered page is justified (documented no-op allowed)
+- [ ] 11.2 Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — implement if MVC route chosen, else document API-only deviation
 
 ## Phase 12 — Testing, security & finalization ⬜
-- [ ] Azure Key Vault refactor (assignment Day-4 #11): Jwt:Key + connection string via Azure.Identity — needs Azure subscription; stays user-secrets + documented if unavailable
-- [ ] Backend unit + integration tests
-- [ ] Final code review & smoke test (assignment Day-4 #13 + Day-8 #25: React → API → EF → SQL → GitHub)
-- [ ] Frontend component/workflow tests (Vitest + RTL)
-- [ ] Security review (incl. `System.Security.Cryptography.Pkcs` NuGet advisory follow-up)
-- [ ] Error handling + structured logging review
-- [ ] Production config, deployment guidance, final README/architecture docs
+- [ ] 12.1 Azure Key Vault refactor (assignment Day-4 #11): Jwt:Key + connection string via Azure.Identity — needs Azure subscription; stays user-secrets + documented if unavailable
+- [ ] 12.2 Backend unit + integration tests (xUnit, `WebApplicationFactory`)
+- [ ] 12.3 Final code review & smoke test (assignment Day-4 #13 + Day-8 #25: React → API → EF → SQL → GitHub)
+- [ ] 12.4 Frontend component/workflow tests (Vitest + RTL)
+- [ ] 12.5 Security review (incl. `System.Security.Cryptography.Pkcs` NuGet advisory follow-up)
+- [ ] 12.6 Error handling + structured logging review
+- [ ] 12.7 Production config, deployment guidance, final README/architecture docs
 
 ---
 
-## Current task (Phase 4.3 — forms, guards, error boundary; closes Phase 4)
-1. New: `pages/Login.tsx`, `pages/Register.tsx`, `components/Guards.tsx` (ProtectedRoute + RequireRole), `components/ErrorBoundary.tsx`
-2. Edit: `App.tsx` (real auth pages, guard nesting, ErrorBoundary outermost), `Layout.tsx` (role-filtered nav), `Placeholders.tsx` (drop auth stubs), `App.css` (form/button styles)
-3. Verify: build+lint green · anon `/` → `/login` · bad input field errors + focus · wrong password server error, inputs preserved · dev sees no Users link, `/users` → `/403` · admin sees Users · register dup-email/short-pw handling · sign-out · session restore; commit includes pending `osnClick→onClick` hamburger fix
-4. Then `next` → assistant verifies → **Phase 5** opens with global exception middleware + structured logging (assignment Day-3 #8), then project CRUD API
-
 ## Standing cautions
-- Stop the API before `dotnet build`/`dotnet ef` (running exe locks the build) — past "failures" were MSB3021 file locks, not code errors
-- Empty migration `Up()` = model unchanged vs DB = the intended edit didn't happen — don't apply, check code first
-- Phase 1.3 runtime check never reported; re-run if anomalies appear
-- NuGet advisory: transitive `System.Security.Cryptography.Pkcs 9.0.11` (deferred to Phase 12)
-- Canonical repo: `D:\Assignment\DevTask-Hub`, branch `day1-developing`
+- Stop the API before `dotnet build`/`dotnet ef` (running exe locks the build)
+- Canonical repo: `D:\Assignment\DevTask-Hub`, current branch: `day5-developing` -> `day6-developing`

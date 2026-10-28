@@ -24,15 +24,29 @@ export default function Login() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const next: { email?: string; password?: string } = {};
+
     if (!email) next.email = "Email is required.";
+
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = "Enter a valid email address.";
+
     if (!password) next.password = "Password is required.";
+
     setErrors(next);
+
     setServerError(null);
-    if (next.email) { emailRef.current?.focus(); return; }
-    if (next.password) { passwordRef.current?.focus(); return; }
+
+    if (next.email) {
+      emailRef.current?.focus();
+      return;
+    }
+
+    if (next.password) {
+      passwordRef.current?.focus();
+      return;
+    }
 
     setPending(true);
+
     try {
       await login(email, password);
       navigate(from, { replace: true });
