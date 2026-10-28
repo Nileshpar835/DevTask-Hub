@@ -1,24 +1,43 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { isAxiosError } from "axios";
-import { 
-  fetchTaskById, 
-  updateTask, 
-  changeTaskStatus, 
-  assignTask, 
-  deleteTask, 
+import {
+  fetchTaskById,
+  updateTask,
+  changeTaskStatus,
+  assignTask,
+  deleteTask,
   fetchTaskActivity,
-  type TaskDetail, 
-  type TaskStatus, 
+  type TaskDetail,
+  type TaskStatus,
   type TaskPriority,
-  type TaskActivityLog 
+  type TaskActivityLog
 } from "../api/tasks";
 import { fetchProjectMembers, type ProjectMember } from "../api/projects";
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 
+import {
+  fetchTaskPullRequests,
+  linkTaskPullRequest,
+  syncTaskPullRequest,
+  unlinkTaskPullRequest,
+  type PullRequest
+} from "../api/github";
+
 export default function TaskDetails() {
+
+
+  // PR State
+  const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
+  const [isPrModalOpen, setIsPrModalOpen] = useState(false);
+  const [prUrl, setPrUrl] = useState("");
+  const [prError, setPrError] = useState<string | null>(null);
+  const [linkingPr, setLinkingPr] = useState(false);
+  const [syncingPrId, setSyncingPrId] = useState<number | null>(null);
+
+
   const { id } = useParams<{ id: string }>();
   const taskId = Number(id);
   const navigate = useNavigate();
@@ -68,6 +87,7 @@ export default function TaskDetails() {
       const [membersData, activityData] = await Promise.all([
         fetchProjectMembers(data.projectId).catch(() => []),
         fetchTaskActivity(taskId).catch(() => []),
+        fetchTaskPullRequests(taskId).then(setPullRequests).catch(() => setPullRequests([])),
       ]);
       setMembers(membersData);
       setActivity(activityData);
@@ -90,6 +110,75 @@ export default function TaskDetails() {
   const isAdmin = user?.role === "Admin";
   const isAssignee = task && user?.id === task.assigneeUserId;
   const isCreatorOrAdmin = isAdmin || (task && user?.id === task.createdByUserId);
+
+  async function handleLinkPr(e: FormEvent) {
+    e.preventDefault();
+    if (!prUrl.trim()) {
+      setPrError("Please enter a valid GitHub Pull Request URL.");
+      return;
+    }
+
+    setLinkingPr(true);
+    setPrError(null);
+    try {
+      await linkTaskPullRequest(taskId, prUrl.trim());
+      setIsPrModalOpen(false);
+      setPrUrl("");
+      const updatedPrs = await fetchTaskPullRequests(taskId);
+      setPullRequests(updatedPrs);
+      const updatedActivity = await fetchTaskActivity(taskId);
+      setActivity(updatedActivity);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setPrError(err.response?.data?.error ?? "Failed to link Pull Request.");
+      } else {
+        setPrError("An unexpected error occurred.");
+      }
+    } finally {
+      setLinkingPr(false);
+    }
+  }
+
+  async function handleSyncPr(prId: number) {
+    setSyncingPrId(prId);
+    try {
+      await syncTaskPullRequest(taskId, prId);
+      const updatedPrs = await fetchTaskPullRequests(taskId);
+      setPullRequests(updatedPrs);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        alert(err.response?.data?.error ?? "Failed to sync PR.");
+      }
+    } finally {
+      setSyncingPrId(null);
+    }
+  }
+
+  async function handleUnlinkPr(prId: number) {
+    if (!window.confirm("Are you sure you want to unlink this pull request?")) return;
+    try {
+      await unlinkTaskPullRequest(taskId, prId);
+      setPullRequests(pullRequests.filter(p => p.id !== prId));
+      const updatedActivity = await fetchTaskActivity(taskId);
+      setActivity(updatedActivity);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        alert(err.response?.data?.error ?? "Failed to unlink PR.");
+      }
+    }
+  }
+
+  function getPrBadge(state: "Open" | "Closed" | "Merged", isDraft: boolean) {
+    if (isDraft) return <span className="badge badge-neutral">Draft</span>;
+    switch (state) {
+      case "Open": return <span className="badge badge-success">Open</span>;
+      case "Merged": return <span className="badge badge-purple">Merged</span>;
+      case "Closed": return <span className="badge badge-danger">Closed</span>;
+    }
+  }
+
+
+
 
   // Allowed transitions calculation
   function getAllowedNextStatuses(current: TaskStatus): TaskStatus[] {
@@ -255,6 +344,61 @@ export default function TaskDetails() {
               {task.description || "No description provided."}
             </p>
           </div>
+          {/* Linked Pull Requests Card */}
+          <div className="detail-card" style={{ marginTop: "24px" }}>
+            <div className="card-header-flex">
+              <div>
+                <h3>Linked Pull Requests ({pullRequests.length})</h3>
+                <p className="page-subtitle">Track GitHub PR reviews, merges, and sync state.</p>
+              </div>
+              <button className="btn" onClick={() => setIsPrModalOpen(true)}>
+                + Link PR
+              </button>
+            </div>
+
+            {pullRequests.length === 0 ? (
+              <p className="text-muted" style={{ fontSize: "13px" }}>No GitHub pull requests linked to this task.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
+                {pullRequests.map((pr) => (
+                  <div key={pr.id} className="pr-item-card">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {getPrBadge(pr.state, pr.isDraft)}
+                      <a href={pr.htmlUrl} target="_blank" rel="noreferrer" className="pr-link">
+                        <strong>{pr.repositoryOwner}/{pr.repositoryName}#{pr.pullRequestNumber}</strong>
+                      </a>
+                    </div>
+                    <p className="pr-title">{pr.title || "Untitled Pull Request"}</p>
+                    <div className="pr-meta-row">
+                      <span className="text-muted">
+                        {pr.lastSyncedAtUtc ? `Synced ${new Date(pr.lastSyncedAtUtc).toLocaleTimeString()}` : "Not synced"}
+                      </span>
+                      {pr.syncError && <span className="pr-error-text">⚠️ {pr.syncError}</span>}
+                      <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
+                        <button
+                          type="button"
+                          className="btn-action-sync"
+                          disabled={syncingPrId === pr.id}
+                          onClick={() => handleSyncPr(pr.id)}
+                        >
+                          {syncingPrId === pr.id ? "Syncing…" : "↻ Sync"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-action-delete"
+                          onClick={() => handleUnlinkPr(pr.id)}
+                        >
+                          Unlink
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+
 
           <div className="detail-card" style={{ marginTop: "24px" }}>
             <h3> Activity History ({activity.length})</h3>
@@ -447,15 +591,45 @@ export default function TaskDetails() {
           <button type="button" className="btn" onClick={() => setIsDeleteOpen(false)}>
             Cancel
           </button>
-          <button 
-            type="button" 
-            className="btn btn-danger" 
+          <button
+            type="button"
+            className="btn btn-danger"
             disabled={deleting}
             onClick={handleDeleteTask}
           >
             {deleting ? "Deleting…" : "Confirm Delete"}
           </button>
         </div>
+      </Modal>
+
+      {/* Link GitHub Pull Request Modal */}
+      <Modal isOpen={isPrModalOpen} onClose={() => setIsPrModalOpen(false)} title="Link GitHub Pull Request">
+        <form onSubmit={handleLinkPr}>
+          {prError && <div className="form-error">{prError}</div>}
+          <div className="field">
+            <label htmlFor="pr-url">GitHub Pull Request URL</label>
+            <input
+              id="pr-url"
+              type="url"
+              placeholder="https://github.com/owner/repo/pull/123"
+              value={prUrl}
+              onChange={(e) => setPrUrl(e.target.value)}
+              required
+            />
+            <p className="field-hint" style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
+              Provide a valid link to an open, merged, or closed GitHub pull request.
+            </p>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn" onClick={() => setIsPrModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={linkingPr}>
+              {linkingPr ? "Linking…" : "Link Pull Request"}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

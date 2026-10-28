@@ -73,14 +73,14 @@
 - [x] 9.3 Route lazy loading, code splitting, memoization pass, responsive check (`React.lazy` + `Suspense`)
 - [x] 9.4 Request cancellation (`AbortController` signal in API methods) (assignment Day-8 #24)
 
-## Phase 10 — GitHub integration 🔶 CURRENT
-- [ ] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling
-- [ ] 10.2 Link/unlink GitHub profile (`GitHubAccounts`)
-- [ ] 10.3 Task ↔ PR linking (unique owner/repo/number)
-- [ ] 10.4 PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
-- [ ] 10.5 UI: integration badges + last-sync display
+## Phase 10 — GitHub integration ✅ (closed 2026-10-28)
+- [x] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling (`GitHubService.cs`, `IHttpClientFactory`)
+- [x] 10.2 Link/unlink GitHub profile (`GitHubAccounts`)
+- [x] 10.3 Task ↔ PR linking (unique owner/repo/number)
+- [x] 10.4 PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
+- [x] 10.5 UI: integration badges + last-sync display (`src/api/github.ts`, `TaskDetails.tsx`, `Profile.tsx`)
 
-## Phase 11 — ASP.NET Core MVC review ⬜
+## Phase 11 — ASP.NET Core MVC review 🔶 CURRENT
 - [ ] 11.1 Decide if any server-rendered page is justified (documented no-op allowed)
 - [ ] 11.2 Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — implement if MVC route chosen, else document API-only deviation
 
