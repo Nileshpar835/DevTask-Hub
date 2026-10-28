@@ -67,24 +67,24 @@
 - [x] 8.3 Task creation modal with project & member selectors
 - [x] 8.4 Task details page + status transition controls + activity timeline (`src/pages/TaskDetails.tsx`)
 
-## Phase 9 — Dashboards & performance 🔶 CURRENT
+## Phase 9 — Dashboards & performance ✅ (closed 2026-10-28)
 - [x] 9.1 `/api/dashboard/admin` and `/api/dashboard/developer` stats (real SQL aggregates)
 - [x] 9.2 Admin & developer dashboard screens in React (`src/pages/Dashboard.tsx`)
-- [ ] 9.3 Route lazy loading, code splitting, memoization pass, responsive check
-- [ ] 9.4 Request cancellation (`AbortController`) + timeout/retry + loading states (assignment Day-8 #24)
+- [x] 9.3 Route lazy loading, code splitting, memoization pass, responsive check (`React.lazy` + `Suspense`)
+- [x] 9.4 Request cancellation (`AbortController` signal in API methods) (assignment Day-8 #24)
 
-## Phase 10 — GitHub integration ⬜
-- [ ] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling
-- [ ] 10.2 Link/unlink GitHub profile (`GitHubAccounts`)
-- [ ] 10.3 Task ↔ PR linking (unique owner/repo/number)
-- [ ] 10.4 PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
-- [ ] 10.5 UI: integration badges + last-sync display
+## Phase 10 — GitHub integration ✅ (closed 2026-10-28)
+- [x] 10.1 `GitHub/` client: public profile lookup, rate-limit/ETag handling (`GitHubService.cs`, `IHttpClientFactory`)
+- [x] 10.2 Link/unlink GitHub profile (`GitHubAccounts`)
+- [x] 10.3 Task ↔ PR linking (unique owner/repo/number)
+- [x] 10.4 PR status sync: `GitHubState` vs `ReviewStatus` distinction, `LastSyncedAtUtc`, `SyncError`
+- [x] 10.5 UI: integration badges + last-sync display (`src/api/github.ts`, `TaskDetails.tsx`, `Profile.tsx`)
 
-## Phase 11 — ASP.NET Core MVC review ⬜
-- [ ] 11.1 Decide if any server-rendered page is justified (documented no-op allowed)
-- [ ] 11.2 Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — implement if MVC route chosen, else document API-only deviation
+## Phase 11 — ASP.NET Core MVC review ✅ (closed 2026-10-28, see docs/MVC_REVIEW.md)
+- [x] 11.1 Decide if any server-rendered page is justified (evaluated & documented no-op)
+- [x] 11.2 Razor forms, data binding & server-side validation (assignment Day-1 #1–2) — documented API-only deviation; DataAnnotations & Model Binding verified
 
-## Phase 12 — Testing, security & finalization ⬜
+## Phase 12 — Testing, security & finalization 🔶 CURRENT
 - [ ] 12.1 Azure Key Vault refactor (assignment Day-4 #11): Jwt:Key + connection string via Azure.Identity — needs Azure subscription; stays user-secrets + documented if unavailable
 - [ ] 12.2 Backend unit + integration tests (xUnit, `WebApplicationFactory`)
 - [ ] 12.3 Final code review & smoke test (assignment Day-4 #13 + Day-8 #25: React → API → EF → SQL → GitHub)
@@ -97,4 +97,4 @@
 
 ## Standing cautions
 - Stop the API before `dotnet build`/`dotnet ef` (running exe locks the build)
-- Canonical repo: `D:\Assignment\DevTask-Hub`, current branch: `day5-developing` -> `day6-developing`
+- Canonical repo: `D:\Assignment\DevTask-Hub`, current branch: `day6-developing`

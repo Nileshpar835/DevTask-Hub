@@ -12,4 +12,5 @@ public interface ITaskService
     Task<TaskDetailDto> AssignTaskAsync(int id, AssignTaskRequest request, int currentUserId, bool isAdmin, CancellationToken ct);
     Task DeleteTaskAsync(int id, int currentUserId, bool isAdmin, CancellationToken ct);
     Task<IReadOnlyList<TaskActivityLogDto>> GetActivityLogsAsync(int taskId, int currentUserId, bool isAdmin, CancellationToken ct);
+    Task<IReadOnlyList<string>> GetCategoriesAsync(CancellationToken ct);
 }

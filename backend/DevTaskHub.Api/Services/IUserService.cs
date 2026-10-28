@@ -5,6 +5,6 @@ namespace DevTaskHub.Api.Services;
 
 public interface IUserService
 {
-Task<List<UserSummaryDto>> GetAllAsync(CancellationToken ct = default);
+    Task<List<UserSummaryDto>> GetAllAsync(CancellationToken ct = default);
+    Task<UserSummaryDto?> ToggleActiveAsync(int id, CancellationToken ct = default);
 }
-

@@ -1,4 +1,4 @@
-import { api } from "./client"
+import { api } from "./client";
 
 export interface UserSummary {
     id: number;
@@ -10,5 +10,10 @@ export interface UserSummary {
 
 export async function fetchUsers(): Promise<UserSummary[]> {
     const { data } = await api.get<UserSummary[]>("/users");
-    return data
+    return data;
+}
+
+export async function toggleUserStatus(id: number): Promise<UserSummary> {
+    const { data } = await api.patch<UserSummary>(`/users/${id}/toggle-status`);
+    return data;
 }

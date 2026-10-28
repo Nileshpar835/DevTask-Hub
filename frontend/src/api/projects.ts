@@ -68,9 +68,14 @@ export interface ProjectQueryParams {
     mine?: boolean;
 }
 
-export async function fetchProjects(params: ProjectQueryParams = {}):
-    Promise<PagedResult<ProjectSummary>> {
-    const { data } = await api.get<PagedResult<ProjectSummary>>("/projects", { params });
+export async function fetchProjects(
+    params: ProjectQueryParams = {},
+    signal?: AbortSignal
+): Promise<PagedResult<ProjectSummary>> {
+    const { data } = await api.get<PagedResult<ProjectSummary>>("/projects", {
+        params,
+        signal
+    });
     return data;
 }
 

@@ -16,6 +16,7 @@ export interface TaskSummary {
     title: string;
     status: TaskStatus;
     priority: TaskPriority;
+    category?: string | null;
     assigneeUserId: number | null;
     assigneeName: string | null;
     createdByUserId: number;
@@ -25,6 +26,7 @@ export interface TaskSummary {
     createdAtUtc: string;
     updatedAtUtc: string;
 }
+
 export interface TaskDetail {
     id: number;
     projectId: number;
@@ -34,6 +36,7 @@ export interface TaskDetail {
     description: string | null;
     status: TaskStatus;
     priority: TaskPriority;
+    category?: string | null;
     assigneeUserId: number | null;
     assigneeName: string | null;
     createdByUserId: number;
@@ -43,6 +46,7 @@ export interface TaskDetail {
     createdAtUtc: string;
     updatedAtUtc: string;
 }
+
 export interface TaskActivityLog {
     id: number;
     taskId: number;
@@ -53,20 +57,25 @@ export interface TaskActivityLog {
     userFullName: string;
     timestampUtc: string;
 }
+
 export interface CreateTaskPayload {
     projectId: number;
     title: string;
     description?: string;
     priority: TaskPriority;
+    category?: string;
     assigneeUserId?: number;
     dueDateUtc?: string;
 }
+
 export interface UpdateTaskPayload {
     title: string;
     description?: string;
     priority: TaskPriority;
+    category?: string;
     dueDateUtc?: string;
 }
+
 export interface TaskQueryParams {
     page?: number;
     pageSize?: number;
@@ -74,16 +83,29 @@ export interface TaskQueryParams {
     assigneeId?: number;
     status?: TaskStatus;
     priority?: TaskPriority;
+    category?: string;
     search?: string;
     mine?: boolean;
 }
-export async function fetchTasks(params: TaskQueryParams = {}): Promise<PagedResult<TaskSummary>> {
-    const { data } = await api.get<PagedResult<TaskSummary>>("/tasks", { params });
+
+export async function fetchTasks(
+    params: TaskQueryParams = {},
+    signal?: AbortSignal
+): Promise<PagedResult<TaskSummary>> {
+    const { data } = await api.get<PagedResult<TaskSummary>>("/tasks", {
+        params,
+        signal
+    });
     return data;
 }
 
 export async function fetchTaskById(id: number): Promise<TaskDetail> {
     const { data } = await api.get<TaskDetail>(`/tasks/${id}`);
+    return data;
+}
+
+export async function fetchTaskCategories(): Promise<string[]> {
+    const { data } = await api.get<string[]>("/tasks/categories");
     return data;
 }
 
@@ -115,4 +137,3 @@ export async function fetchTaskActivity(id: number): Promise<TaskActivityLog[]> 
     const { data } = await api.get<TaskActivityLog[]>(`/tasks/${id}/activity`);
     return data;
 }
-

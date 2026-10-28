@@ -7,6 +7,7 @@ public class TaskItem
     public int ProjectId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Category { get; set; } = "Feature";
     public TaskItemStatus Status { get; set; } = TaskItemStatus.ToDo;
     public TaskItemPriority Priority { get; set; } = TaskItemPriority.Medium;
     public int? AssigneeUserId { get; set; }

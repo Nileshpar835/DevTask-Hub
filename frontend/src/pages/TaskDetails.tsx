@@ -1,24 +1,52 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { isAxiosError } from "axios";
-import { 
-  fetchTaskById, 
-  updateTask, 
-  changeTaskStatus, 
-  assignTask, 
-  deleteTask, 
+import {
+  fetchTaskById,
+  updateTask,
+  changeTaskStatus,
+  assignTask,
+  deleteTask,
   fetchTaskActivity,
-  type TaskDetail, 
-  type TaskStatus, 
+  fetchTaskCategories,
+  type TaskDetail,
+  type TaskStatus,
   type TaskPriority,
-  type TaskActivityLog 
+  type TaskActivityLog
 } from "../api/tasks";
 import { fetchProjectMembers, type ProjectMember } from "../api/projects";
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 
+import {
+  fetchTaskPullRequests,
+  linkTaskPullRequest,
+  syncTaskPullRequest,
+  unlinkTaskPullRequest,
+  fetchPullRequestCommits,
+  type PullRequest,
+  type GitHubCommit
+} from "../api/github";
+
 export default function TaskDetails() {
+
+
+  // PR State
+  const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
+  const [isPrModalOpen, setIsPrModalOpen] = useState(false);
+  const [prUrl, setPrUrl] = useState("");
+  const [prError, setPrError] = useState<string | null>(null);
+  const [linkingPr, setLinkingPr] = useState(false);
+  const [syncingPrId, setSyncingPrId] = useState<number | null>(null);
+
+  // PR Commits state
+  const [expandedPrCommits, setExpandedPrCommits] = useState<Record<number, boolean>>({});
+  const [prCommits, setPrCommits] = useState<Record<number, GitHubCommit[]>>({});
+  const [loadingCommits, setLoadingCommits] = useState<Record<number, boolean>>({});
+  const [commitErrors, setCommitErrors] = useState<Record<number, string | null>>({});
+
+
   const { id } = useParams<{ id: string }>();
   const taskId = Number(id);
   const navigate = useNavigate();
@@ -36,6 +64,10 @@ export default function TaskDetails() {
   const [editDesc, setEditDesc] = useState("");
   const [editPriority, setEditPriority] = useState<TaskPriority>("Medium");
   const [editDueDate, setEditDueDate] = useState("");
+  const [editCategory, setEditCategory] = useState("Feature");
+  const [categories, setCategories] = useState<string[]>(["Feature", "Bug", "Update", "Refactor", "Documentation"]);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategoryName, setCustomCategoryName] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -63,11 +95,16 @@ export default function TaskDetails() {
       setEditDesc(data.description || "");
       setEditPriority(data.priority);
       setEditDueDate(data.dueDateUtc ? data.dueDateUtc.slice(0, 10) : "");
+      setEditCategory(data.category || "Feature");
+      fetchTaskCategories().then(cats => {
+        if (cats && cats.length > 0) setCategories(cats);
+      }).catch(() => {});
 
       // Concurrently load project members and activity
       const [membersData, activityData] = await Promise.all([
         fetchProjectMembers(data.projectId).catch(() => []),
         fetchTaskActivity(taskId).catch(() => []),
+        fetchTaskPullRequests(taskId).then(setPullRequests).catch(() => setPullRequests([])),
       ]);
       setMembers(membersData);
       setActivity(activityData);
@@ -90,6 +127,98 @@ export default function TaskDetails() {
   const isAdmin = user?.role === "Admin";
   const isAssignee = task && user?.id === task.assigneeUserId;
   const isCreatorOrAdmin = isAdmin || (task && user?.id === task.createdByUserId);
+
+  async function handleLinkPr(e: FormEvent) {
+    e.preventDefault();
+    if (!prUrl.trim()) {
+      setPrError("Please enter a valid GitHub Pull Request URL.");
+      return;
+    }
+
+    setLinkingPr(true);
+    setPrError(null);
+    try {
+      await linkTaskPullRequest(taskId, prUrl.trim());
+      setIsPrModalOpen(false);
+      setPrUrl("");
+      const updatedPrs = await fetchTaskPullRequests(taskId);
+      setPullRequests(updatedPrs);
+      const updatedActivity = await fetchTaskActivity(taskId);
+      setActivity(updatedActivity);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setPrError(err.response?.data?.error ?? "Failed to link Pull Request.");
+      } else {
+        setPrError("An unexpected error occurred.");
+      }
+    } finally {
+      setLinkingPr(false);
+    }
+  }
+
+  async function handleSyncPr(prId: number) {
+    setSyncingPrId(prId);
+    try {
+      await syncTaskPullRequest(taskId, prId);
+      const updatedPrs = await fetchTaskPullRequests(taskId);
+      setPullRequests(updatedPrs);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        alert(err.response?.data?.error ?? "Failed to sync PR.");
+      }
+    } finally {
+      setSyncingPrId(null);
+    }
+  }
+
+  async function handleUnlinkPr(prId: number) {
+    if (!window.confirm("Are you sure you want to unlink this pull request?")) return;
+    try {
+      await unlinkTaskPullRequest(taskId, prId);
+      setPullRequests(pullRequests.filter(p => p.id !== prId));
+      const updatedActivity = await fetchTaskActivity(taskId);
+      setActivity(updatedActivity);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        alert(err.response?.data?.error ?? "Failed to unlink PR.");
+      }
+    }
+  }
+
+  async function togglePrCommits(pr: PullRequest) {
+    const isCurrentlyOpen = !!expandedPrCommits[pr.id];
+    setExpandedPrCommits((prev) => ({ ...prev, [pr.id]: !isCurrentlyOpen }));
+
+    if (!isCurrentlyOpen && !prCommits[pr.id]) {
+      setLoadingCommits((prev) => ({ ...prev, [pr.id]: true }));
+      setCommitErrors((prev) => ({ ...prev, [pr.id]: null }));
+      try {
+        const list = await fetchPullRequestCommits(
+          pr.repositoryOwner,
+          pr.repositoryName,
+          pr.pullRequestNumber
+        );
+        setPrCommits((prev) => ({ ...prev, [pr.id]: list }));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to load commits from GitHub.";
+        setCommitErrors((prev) => ({ ...prev, [pr.id]: msg }));
+      } finally {
+        setLoadingCommits((prev) => ({ ...prev, [pr.id]: false }));
+      }
+    }
+  }
+
+  function getPrBadge(state: "Open" | "Closed" | "Merged", isDraft: boolean) {
+    if (isDraft) return <span className="badge badge-neutral">Draft</span>;
+    switch (state) {
+      case "Open": return <span className="badge badge-success">Open</span>;
+      case "Merged": return <span className="badge badge-purple">Merged</span>;
+      case "Closed": return <span className="badge badge-danger">Closed</span>;
+    }
+  }
+
+
+
 
   // Allowed transitions calculation
   function getAllowedNextStatuses(current: TaskStatus): TaskStatus[] {
@@ -153,12 +282,17 @@ export default function TaskDetails() {
     setSavingEdit(true);
     setEditError(null);
     try {
+      const finalCategory = isCustomCategory ? customCategoryName.trim() : editCategory;
       const updated = await updateTask(taskId, {
         title: editTitle.trim(),
         description: editDesc.trim() || undefined,
         priority: editPriority,
+        category: finalCategory || undefined,
         dueDateUtc: editDueDate ? new Date(editDueDate).toISOString() : undefined,
       });
+      if (finalCategory && !categories.includes(finalCategory)) {
+        setCategories(prev => [...prev, finalCategory]);
+      }
       setTask(updated);
       setIsEditOpen(false);
       const newActivity = await fetchTaskActivity(taskId);
@@ -229,6 +363,11 @@ export default function TaskDetails() {
           <Link to="/tasks" className="back-link">← All Tasks</Link>
           <div className="project-header-title">
             <span className="project-key">{task.projectKey}</span>
+            {task.category && (
+              <span className={`category-chip cat-${task.category.toLowerCase()}`} style={{ marginLeft: "8px" }}>
+                🏷️ {task.category}
+              </span>
+            )}
             <h2>{task.title}</h2>
           </div>
         </div>
@@ -255,6 +394,131 @@ export default function TaskDetails() {
               {task.description || "No description provided."}
             </p>
           </div>
+          {/* Linked Pull Requests Card */}
+          <div className="detail-card" style={{ marginTop: "24px" }}>
+            <div className="card-header-flex">
+              <div>
+                <h3>Linked Pull Requests ({pullRequests.length})</h3>
+                <p className="page-subtitle">Track GitHub PR reviews, merges, and sync state.</p>
+              </div>
+              <button className="btn" onClick={() => setIsPrModalOpen(true)}>
+                + Link PR
+              </button>
+            </div>
+
+            {pullRequests.length === 0 ? (
+              <p className="text-muted" style={{ fontSize: "13px" }}>No GitHub pull requests linked to this task.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "12px" }}>
+                {pullRequests.map((pr) => (
+                  <div key={pr.id} className="pr-item-card">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {getPrBadge(pr.state, pr.isDraft)}
+                      <a href={pr.htmlUrl} target="_blank" rel="noreferrer" className="pr-link">
+                        <strong>{pr.repositoryOwner}/{pr.repositoryName}#{pr.pullRequestNumber}</strong>
+                      </a>
+                    </div>
+                    <p className="pr-title">{pr.title || "Untitled Pull Request"}</p>
+                    <div className="pr-meta-row">
+                      <span className="text-muted">
+                        {pr.lastSyncedAtUtc ? `Synced ${new Date(pr.lastSyncedAtUtc).toLocaleTimeString()}` : "Not synced"}
+                      </span>
+                      {pr.syncError && <span className="pr-error-text">⚠️ {pr.syncError}</span>}
+
+                      <button
+                        type="button"
+                        className="pr-commits-toggle"
+                        onClick={() => togglePrCommits(pr)}
+                      >
+                        {expandedPrCommits[pr.id] ? "▴ Hide Commits" : "▾ Commits"}
+                      </button>
+
+                      <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
+                        <button
+                          type="button"
+                          className="btn-action-sync"
+                          disabled={syncingPrId === pr.id}
+                          onClick={() => handleSyncPr(pr.id)}
+                        >
+                          {syncingPrId === pr.id ? "Syncing…" : "↻ Sync"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-action-delete"
+                          onClick={() => handleUnlinkPr(pr.id)}
+                        >
+                          Unlink
+                        </button>
+                      </div>
+                    </div>
+
+                    {expandedPrCommits[pr.id] && (
+                      <div className="pr-commits-container">
+                        <div className="pr-commits-header">
+                          <span>Commits on this PR</span>
+                          {prCommits[pr.id] && <span>{prCommits[pr.id].length} commit(s)</span>}
+                        </div>
+
+                        {loadingCommits[pr.id] && (
+                          <p className="text-muted" style={{ margin: "6px 0", fontSize: "12px" }}>
+                            Fetching commits from GitHub…
+                          </p>
+                        )}
+
+                        {commitErrors[pr.id] && (
+                          <p className="pr-error-text" style={{ margin: "4px 0" }}>
+                            ⚠️ {commitErrors[pr.id]}
+                          </p>
+                        )}
+
+                        {prCommits[pr.id] && prCommits[pr.id].length === 0 && (
+                          <p className="text-muted" style={{ margin: "6px 0", fontSize: "12px" }}>
+                            No commits found on this pull request.
+                          </p>
+                        )}
+
+                        {prCommits[pr.id] && prCommits[pr.id].length > 0 && (
+                          <div className="pr-commits-list">
+                            {prCommits[pr.id].map((c) => (
+                              <div key={c.sha} className="pr-commit-item">
+                                <a
+                                  href={c.htmlUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="commit-hash"
+                                  title="View commit on GitHub"
+                                >
+                                  <code>{c.sha.substring(0, 7)}</code>
+                                </a>
+                                <span className="commit-msg" title={c.message}>
+                                  {c.message}
+                                </span>
+                                <div className="commit-meta">
+                                  {c.authorAvatarUrl && (
+                                    <img
+                                      src={c.authorAvatarUrl}
+                                      alt={c.authorName}
+                                      style={{ width: "16px", height: "16px", borderRadius: "50%" }}
+                                    />
+                                  )}
+                                  <span>{c.authorName}</span>
+                                  {c.authorDate && (
+                                    <span>• {new Date(c.authorDate).toLocaleDateString()}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+
 
           <div className="detail-card" style={{ marginTop: "24px" }}>
             <h3> Activity History ({activity.length})</h3>
@@ -427,6 +691,58 @@ export default function TaskDetails() {
             </div>
           </div>
 
+          <div className="field">
+            <label htmlFor="edit-task-category">Category</label>
+            <select
+              id="edit-task-category"
+              className="filter-select"
+              style={{ width: "100%", padding: "8px" }}
+              value={isCustomCategory ? "__CUSTOM__" : editCategory}
+              onChange={(e) => {
+                if (e.target.value === "__CUSTOM__") {
+                  setIsCustomCategory(true);
+                } else {
+                  setIsCustomCategory(false);
+                  setEditCategory(e.target.value);
+                }
+              }}
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+              <option value="__CUSTOM__">+ Create new category…</option>
+            </select>
+          </div>
+
+          {isCustomCategory && (
+            <div className="field">
+              <label htmlFor="edit-custom-cat">New Category Name</label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  id="edit-custom-cat"
+                  type="text"
+                  placeholder="e.g. Design, DevOps, QA"
+                  maxLength={50}
+                  value={customCategoryName}
+                  onChange={(e) => setCustomCategoryName(e.target.value)}
+                  style={{ flex: 1 }}
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    setIsCustomCategory(false);
+                    setCustomCategoryName("");
+                  }}
+                  style={{ fontSize: "12px" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="modal-actions">
             <button type="button" className="btn" onClick={() => setIsEditOpen(false)}>
               Cancel
@@ -447,15 +763,45 @@ export default function TaskDetails() {
           <button type="button" className="btn" onClick={() => setIsDeleteOpen(false)}>
             Cancel
           </button>
-          <button 
-            type="button" 
-            className="btn btn-danger" 
+          <button
+            type="button"
+            className="btn btn-danger"
             disabled={deleting}
             onClick={handleDeleteTask}
           >
             {deleting ? "Deleting…" : "Confirm Delete"}
           </button>
         </div>
+      </Modal>
+
+      {/* Link GitHub Pull Request Modal */}
+      <Modal isOpen={isPrModalOpen} onClose={() => setIsPrModalOpen(false)} title="Link GitHub Pull Request">
+        <form onSubmit={handleLinkPr}>
+          {prError && <div className="form-error">{prError}</div>}
+          <div className="field">
+            <label htmlFor="pr-url">GitHub Pull Request URL</label>
+            <input
+              id="pr-url"
+              type="url"
+              placeholder="https://github.com/owner/repo/pull/123"
+              value={prUrl}
+              onChange={(e) => setPrUrl(e.target.value)}
+              required
+            />
+            <p className="field-hint" style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
+              Provide a valid link to an open, merged, or closed GitHub pull request.
+            </p>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn" onClick={() => setIsPrModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={linkingPr}>
+              {linkingPr ? "Linking…" : "Link Pull Request"}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
