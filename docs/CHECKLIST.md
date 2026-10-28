@@ -69,7 +69,7 @@
 
 ## Phase 9 — Dashboards & performance 🔶 CURRENT
 - [x] 9.1 `/api/dashboard/admin` and `/api/dashboard/developer` stats (real SQL aggregates)
-- [ ] 9.2 Admin & developer dashboard screens in React (`src/pages/Dashboard.tsx`)
+- [x] 9.2 Admin & developer dashboard screens in React (`src/pages/Dashboard.tsx`)
 - [ ] 9.3 Route lazy loading, code splitting, memoization pass, responsive check
 - [ ] 9.4 Request cancellation (`AbortController`) + timeout/retry + loading states (assignment Day-8 #24)
 
@@ -97,4 +97,4 @@
 
 ## Standing cautions
 - Stop the API before `dotnet build`/`dotnet ef` (running exe locks the build)
-- Canonical repo: `D:\Assignment\DevTask-Hub`, branch `day5-developing`
+- Canonical repo: `D:\Assignment\DevTask-Hub`, current branch: `day5-developing` -> `day6-developing`

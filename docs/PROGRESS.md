@@ -6,11 +6,11 @@
 **Phase 5 — CLOSED 2026-10-26.** (commits `d91019f`, `33cadef` on `day5-developing`). Backend API build verified green (0 errors).
 **Phase 6 — CLOSED 2026-10-27.** (commit `9bd8bc2`). Project Management UI (list, details, team members, modals, UI primitives).
 **Phase 7 — CLOSED 2026-10-27.** (commit `8776f9b`). Task Management Backend API (CRUD, status state machine, project-member assignee guard, activity audit logs).
-**Phase 8 — CLOSED 2026-10-27.** (commits `b7e32a9`, `5f54a1e`). Task Management Frontend UI.
-**Phase 9 — IN PROGRESS (Dashboards & Performance).**
+**Phase 8 — CLOSED 2026-10-27.** (commits `b7e32a9`, `5f54a1e`). Task Management Frontend UI (list, multi-factor filters, details, activity timeline).
+**Phase 9 (Part 1 — Stats API & UI) — CLOSED 2026-10-28.**
 - Subphase 9.1 ✅: Dashboard statistics backend endpoints (`GET /api/dashboard/admin`, `GET /api/dashboard/developer`). Build verified green (0 errors).
-- Subphase 9.2 & 9.3 🔶 (NEXT): Real Dashboard UI in React (`src/api/dashboard.ts`, `src/pages/Dashboard.tsx`) with role-based Admin & Developer views.
-- Subphase 9.4 ⬜: Route lazy loading, memoization pass, and request cancellation.
+- Subphase 9.2 ✅: Role-aware Dashboard screens in React (`src/api/dashboard.ts`, `src/pages/Dashboard.tsx`) with Admin KPI cards, Task Status breakdown, Organization Activity, Developer Overdue alerts, and Due Soon tasks. Build verified green (0 errors).
+**Phase 9 (Part 2 — Performance) & Phase 10 (GitHub Integration) — UPCOMING on `day6-developing`.**
 
 ## Completed work
 - Phase 0: workspace inspection; stack decided (net10.0, SQL Server 2025 Express, Node 24); all planning docs written.
@@ -26,14 +26,14 @@
 - Phase 6: Complete Project Management UI (Projects list, Project Details, team member management, edit/delete modals, UI primitives).
 - Phase 7: Complete Task Management API (CRUD, status transition state machine, project membership validation, automated audit logging, filters, pagination).
 - Phase 8: Complete Task Management UI (Tasks list, multi-filter query bar, Task Details with state machine transitions, project-member assignee selector, and activity audit timeline).
-- Phase 9.1: Dashboard statistics backend API (Admin & Developer aggregation services and endpoints).
+- Phase 9.1 & 9.2: Dashboard Statistics API & Role-Aware Dashboard UI.
 
 ## Known issues / open items
 - Transitive `System.Security.Cryptography.Pkcs 9.0.11` NuGet advisory deferred to Phase 12.
 
 ## Git state
-- Branch: **`day5-developing`**
+- Branch: **`day5-developing`** (committing and pushing; transitioning to `day6-developing`).
 - Canonical repo: `D:\Assignment\DevTask-Hub`.
 
 ## Next permitted action
-Implement Phase 9.2 & 9.3 (Frontend Dashboard API client, role-based views in `Dashboard.tsx`).
+Push `day5-developing`, checkout `day6-developing`, and begin Phase 9.3/9.4 (Performance & Lazy Loading) and Phase 10 (GitHub Integration).

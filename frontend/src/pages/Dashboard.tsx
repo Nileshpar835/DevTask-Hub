@@ -2,11 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { useAuth } from "../context/useAuth";
-import { 
-  fetchAdminDashboard, 
-  fetchDeveloperDashboard, 
-  type AdminDashboardData, 
-  type DeveloperDashboardData 
+import {
+  fetchAdminDashboard,
+  fetchDeveloperDashboard,
+  type AdminDashboardData,
+  type DeveloperDashboardData
 } from "../api/dashboard";
 import { Badge } from "../components/ui/Badge";
 
@@ -56,8 +56,8 @@ export default function Dashboard() {
         <div>
           <h2>Welcome back, {user?.fullName}!</h2>
           <p className="page-subtitle">
-            {isAdmin 
-              ? "System-wide developer operations and project health overview." 
+            {isAdmin
+              ? "System-wide developer operations and project health overview."
               : "Here is what needs your attention today."}
           </p>
         </div>
@@ -81,7 +81,9 @@ export default function Dashboard() {
 // -------------------------------------------------------------
 // Admin Dashboard Component
 // -------------------------------------------------------------
-function AdminDashboardView({ data }: { data: AdminDashboardData }) {
+function AdminDashboardView(
+  { data }: { data: AdminDashboardData }
+) {
   return (
     <>
       {/* Stat KPI Cards */}

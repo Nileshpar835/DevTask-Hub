@@ -16,5 +16,4 @@ public class TaskActivityLog
     public TaskItem Task { get; set; } = null!;
     public Project Project { get; set; } = null!;
     public User Actor { get; set; } = null!;
-    public object TimestampUtc { get; internal set; }
 }
