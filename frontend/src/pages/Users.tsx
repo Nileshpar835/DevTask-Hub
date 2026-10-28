@@ -4,6 +4,21 @@ import { fetchUsers, toggleUserStatus, type UserSummary } from "../api/users";
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+}
+
+const AVATAR_COLORS = ["#2563eb", "#059669", "#7c3aed", "#db2777", "#d97706", "#0891b2", "#4f46e5"];
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 export default function Users() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserSummary[]>([]);
@@ -86,19 +101,41 @@ export default function Users() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  const activeCount = users.filter((u) => u.isActive).length;
+
   return (
-    <div className="projects-container">
-      <div className="page-header">
+    <div className="tasks-page-wrapper">
+      {/* Breadcrumb */}
+      <div className="tasks-breadcrumb">
+        <span>DevTask Hub</span>
+        <span className="crumb-sep">·</span>
+        <span>Administration</span>
+        <span className="crumb-sep">·</span>
+        <span className="crumb-current">User Directory</span>
+      </div>
+
+      {/* Header */}
+      <div className="tasks-header-row">
         <div>
           <h2>User Management</h2>
-          <p className="page-subtitle">View and manage system users, roles, and account access.</p>
+          <p className="page-subtitle">View and manage system users, roles, and account access permissions.</p>
+        </div>
+
+        <div className="tasks-header-actions">
+          <span className="tasks-count-badge">
+            {filteredUsers.length} of {users.length} users ({activeCount} active)
+          </span>
         </div>
       </div>
 
-      {error && <div className="form-error">{error}</div>}
+      {error && (
+        <div className="form-error" role="alert" style={{ marginBottom: "16px" }}>
+          {error}
+        </div>
+      )}
 
-      {/* Query Bar */}
-      <div className="query-bar" style={{ marginBottom: "16px" }}>
+      {/* Filter and Search Bar */}
+      <div className="filter-bar" style={{ marginBottom: "20px" }}>
         <input
           type="search"
           placeholder="Search by name or email…"
@@ -108,7 +145,7 @@ export default function Users() {
           style={{ maxWidth: "320px" }}
         />
 
-        <div className="query-filters">
+        <div className="filter-group">
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -128,6 +165,20 @@ export default function Users() {
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
+
+          {(search || roleFilter !== "All" || statusFilter !== "All") && (
+            <button
+              type="button"
+              className="btn-clear-filters"
+              onClick={() => {
+                setSearch("");
+                setRoleFilter("All");
+                setStatusFilter("All");
+              }}
+            >
+              ✕ Clear
+            </button>
+          )}
         </div>
       </div>
 
@@ -135,17 +186,18 @@ export default function Users() {
         <p className="page-state">Loading users…</p>
       ) : filteredUsers.length === 0 ? (
         <div className="empty-state">
-          <p>No users matched the search criteria.</p>
+          <h3>No users found</h3>
+          <p>No system accounts matched the search criteria.</p>
         </div>
       ) : (
-        <div className="projects-table-wrap">
-          <table className="projects-table">
+        <div className="table-responsive">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>User</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Status</th>
+                <th>Account Status</th>
                 <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
@@ -155,12 +207,27 @@ export default function Users() {
                 return (
                   <tr key={u.id}>
                     <td>
-                      <strong>{u.fullname}</strong>
-                      {isSelf && (
-                        <span className="badge badge-neutral" style={{ marginLeft: "8px", fontSize: "11px" }}>
-                          You
-                        </span>
-                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div
+                          className="assignee-bubble"
+                          style={{
+                            backgroundColor: getAvatarColor(u.fullname),
+                            width: "30px",
+                            height: "30px",
+                            fontSize: "12px",
+                          }}
+                        >
+                          {getInitials(u.fullname)}
+                        </div>
+                        <div>
+                          <strong>{u.fullname}</strong>
+                          {isSelf && (
+                            <span className="owner-badge">
+                              You
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="text-muted">{u.email}</td>
                     <td>
@@ -177,7 +244,7 @@ export default function Users() {
                       <button
                         type="button"
                         className={u.isActive ? "btn-action-delete" : "btn"}
-                        style={!u.isActive ? { fontSize: "12px", padding: "4px 8px" } : {}}
+                        style={!u.isActive ? { fontSize: "12px", padding: "4px 10px" } : { fontSize: "13px" }}
                         disabled={isSelf || togglingId === u.id}
                         onClick={() => handleToggleStatus(u)}
                       >
