@@ -5,7 +5,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ProtectedRoute, RequireRole } from "./components/Guards";
 import Layout from "./components/Layout";
 import {
-  ProjectForm, ProjectMembers, TaskCreate, Users,
+  ProjectForm, ProjectMembers, TaskCreate,
   Forbidden, NotFound,
 } from "./pages/Placeholders";
 import "./App.css";
@@ -17,6 +17,7 @@ const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const TaskDetails = lazy(() => import("./pages/TaskDetails"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Users = lazy(() => import("./pages/Users"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 
