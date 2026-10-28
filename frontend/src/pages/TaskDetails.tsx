@@ -23,7 +23,9 @@ import {
   linkTaskPullRequest,
   syncTaskPullRequest,
   unlinkTaskPullRequest,
-  type PullRequest
+  fetchPullRequestCommits,
+  type PullRequest,
+  type GitHubCommit
 } from "../api/github";
 
 export default function TaskDetails() {
@@ -36,6 +38,12 @@ export default function TaskDetails() {
   const [prError, setPrError] = useState<string | null>(null);
   const [linkingPr, setLinkingPr] = useState(false);
   const [syncingPrId, setSyncingPrId] = useState<number | null>(null);
+
+  // PR Commits state
+  const [expandedPrCommits, setExpandedPrCommits] = useState<Record<number, boolean>>({});
+  const [prCommits, setPrCommits] = useState<Record<number, GitHubCommit[]>>({});
+  const [loadingCommits, setLoadingCommits] = useState<Record<number, boolean>>({});
+  const [commitErrors, setCommitErrors] = useState<Record<number, string | null>>({});
 
 
   const { id } = useParams<{ id: string }>();
@@ -164,6 +172,29 @@ export default function TaskDetails() {
     } catch (err) {
       if (isAxiosError(err)) {
         alert(err.response?.data?.error ?? "Failed to unlink PR.");
+      }
+    }
+  }
+
+  async function togglePrCommits(pr: PullRequest) {
+    const isCurrentlyOpen = !!expandedPrCommits[pr.id];
+    setExpandedPrCommits((prev) => ({ ...prev, [pr.id]: !isCurrentlyOpen }));
+
+    if (!isCurrentlyOpen && !prCommits[pr.id]) {
+      setLoadingCommits((prev) => ({ ...prev, [pr.id]: true }));
+      setCommitErrors((prev) => ({ ...prev, [pr.id]: null }));
+      try {
+        const list = await fetchPullRequestCommits(
+          pr.repositoryOwner,
+          pr.repositoryName,
+          pr.pullRequestNumber
+        );
+        setPrCommits((prev) => ({ ...prev, [pr.id]: list }));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to load commits from GitHub.";
+        setCommitErrors((prev) => ({ ...prev, [pr.id]: msg }));
+      } finally {
+        setLoadingCommits((prev) => ({ ...prev, [pr.id]: false }));
       }
     }
   }
@@ -374,6 +405,15 @@ export default function TaskDetails() {
                         {pr.lastSyncedAtUtc ? `Synced ${new Date(pr.lastSyncedAtUtc).toLocaleTimeString()}` : "Not synced"}
                       </span>
                       {pr.syncError && <span className="pr-error-text">⚠️ {pr.syncError}</span>}
+
+                      <button
+                        type="button"
+                        className="pr-commits-toggle"
+                        onClick={() => togglePrCommits(pr)}
+                      >
+                        {expandedPrCommits[pr.id] ? "▴ Hide Commits" : "▾ Commits"}
+                      </button>
+
                       <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
                         <button
                           type="button"
@@ -392,6 +432,67 @@ export default function TaskDetails() {
                         </button>
                       </div>
                     </div>
+
+                    {expandedPrCommits[pr.id] && (
+                      <div className="pr-commits-container">
+                        <div className="pr-commits-header">
+                          <span>Commits on this PR</span>
+                          {prCommits[pr.id] && <span>{prCommits[pr.id].length} commit(s)</span>}
+                        </div>
+
+                        {loadingCommits[pr.id] && (
+                          <p className="text-muted" style={{ margin: "6px 0", fontSize: "12px" }}>
+                            Fetching commits from GitHub…
+                          </p>
+                        )}
+
+                        {commitErrors[pr.id] && (
+                          <p className="pr-error-text" style={{ margin: "4px 0" }}>
+                            ⚠️ {commitErrors[pr.id]}
+                          </p>
+                        )}
+
+                        {prCommits[pr.id] && prCommits[pr.id].length === 0 && (
+                          <p className="text-muted" style={{ margin: "6px 0", fontSize: "12px" }}>
+                            No commits found on this pull request.
+                          </p>
+                        )}
+
+                        {prCommits[pr.id] && prCommits[pr.id].length > 0 && (
+                          <div className="pr-commits-list">
+                            {prCommits[pr.id].map((c) => (
+                              <div key={c.sha} className="pr-commit-item">
+                                <a
+                                  href={c.htmlUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="commit-hash"
+                                  title="View commit on GitHub"
+                                >
+                                  <code>{c.sha.substring(0, 7)}</code>
+                                </a>
+                                <span className="commit-msg" title={c.message}>
+                                  {c.message}
+                                </span>
+                                <div className="commit-meta">
+                                  {c.authorAvatarUrl && (
+                                    <img
+                                      src={c.authorAvatarUrl}
+                                      alt={c.authorName}
+                                      style={{ width: "16px", height: "16px", borderRadius: "50%" }}
+                                    />
+                                  )}
+                                  <span>{c.authorName}</span>
+                                  {c.authorDate && (
+                                    <span>• {new Date(c.authorDate).toLocaleDateString()}</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

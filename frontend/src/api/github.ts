@@ -25,6 +25,31 @@ export interface PullRequest {
   syncError: string | null;
 }
 
+export interface GitHubCommit {
+  sha: string;
+  htmlUrl: string;
+  message: string;
+  authorName: string;
+  authorDate: string;
+  authorAvatarUrl?: string;
+}
+
+interface RawGitHubCommit {
+  sha: string;
+  html_url: string;
+  commit?: {
+    message?: string;
+    author?: {
+      name?: string;
+      date?: string;
+    };
+  };
+  author?: {
+    login?: string;
+    avatar_url?: string;
+  };
+}
+
 export async function fetchMyGitHubProfile(): Promise<GitHubProfile | null> {
   try {
     const { data } = await api.get<GitHubProfile>("/github/profile");
@@ -60,4 +85,37 @@ export async function syncTaskPullRequest(taskId: number, prId: number): Promise
 
 export async function unlinkTaskPullRequest(taskId: number, prId: number): Promise<void> {
   await api.delete(`/tasks/${taskId}/pull-requests/${prId}`);
+}
+
+export async function fetchPullRequestCommits(
+  owner: string,
+  repo: string,
+  pullNumber: number
+): Promise<GitHubCommit[]> {
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls/${pullNumber}/commits?per_page=15`;
+  const res = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    if (res.status === 403) {
+      throw new Error("GitHub rate limit reached (60 req/hr). Please try again shortly.");
+    }
+    if (res.status === 404) {
+      throw new Error("Repository or Pull Request not found on GitHub.");
+    }
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const rawList: RawGitHubCommit[] = await res.json();
+  return rawList.map((c) => ({
+    sha: c.sha,
+    htmlUrl: c.html_url,
+    message: c.commit?.message?.split("\n")[0] || "No commit message",
+    authorName: c.commit?.author?.name || c.author?.login || "Unknown",
+    authorDate: c.commit?.author?.date || "",
+    authorAvatarUrl: c.author?.avatar_url,
+  }));
 }
