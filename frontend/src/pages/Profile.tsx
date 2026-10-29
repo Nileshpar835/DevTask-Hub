@@ -8,6 +8,7 @@ import {
   type GitHubProfile 
 } from "../api/github";
 import { Badge } from "../components/ui/Badge";
+import { Modal } from "../components/ui/Modal";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -17,6 +18,8 @@ export default function Profile() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isDisconnectOpen, setIsDisconnectOpen] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
     fetchMyGitHubProfile()
@@ -50,14 +53,17 @@ export default function Profile() {
     }
   }
 
-  async function handleUnlink() {
-    if (!window.confirm("Are you sure you want to disconnect your GitHub profile?")) return;
+  async function handleConfirmDisconnect() {
+    setDisconnecting(true);
     try {
       await unlinkGitHubProfile();
       setProfile(null);
+      setIsDisconnectOpen(false);
       setSuccess("GitHub account disconnected.");
     } catch {
       setError("Failed to disconnect GitHub profile.");
+    } finally {
+      setDisconnecting(false);
     }
   }
 
@@ -121,7 +127,11 @@ export default function Profile() {
                 Connected on {profile.fetchedAtUtc ? new Date(profile.fetchedAtUtc).toLocaleDateString() : "recently"}
               </p>
             </div>
-            <button type="button" className="btn btn-danger" onClick={handleUnlink}>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => setIsDisconnectOpen(true)}
+            >
               Disconnect
             </button>
           </div>
@@ -143,6 +153,40 @@ export default function Profile() {
           </form>
         )}
       </div>
+
+      {/* Disconnect GitHub Modal */}
+      <Modal
+        isOpen={isDisconnectOpen}
+        onClose={() => {
+          if (!disconnecting) setIsDisconnectOpen(false);
+        }}
+        title="Disconnect GitHub Profile"
+      >
+        <p>
+          Are you sure you want to disconnect your GitHub account (<strong>@{profile?.username}</strong>)?
+        </p>
+        <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "8px" }}>
+          You can reconnect this or another GitHub username at any time.
+        </p>
+        <div className="modal-actions" style={{ marginTop: "20px" }}>
+          <button
+            type="button"
+            className="btn"
+            disabled={disconnecting}
+            onClick={() => setIsDisconnectOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            disabled={disconnecting}
+            onClick={handleConfirmDisconnect}
+          >
+            {disconnecting ? "Disconnecting…" : "Disconnect"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -40,12 +40,18 @@ export default function TaskDetails() {
   const [linkingPr, setLinkingPr] = useState(false);
   const [syncingPrId, setSyncingPrId] = useState<number | null>(null);
 
+  // Unlink PR Modal State
+  const [prToUnlink, setPrToUnlink] = useState<PullRequest | null>(null);
+  const [unlinkingPr, setUnlinkingPr] = useState(false);
+
   // PR Commits state
   const [expandedPrCommits, setExpandedPrCommits] = useState<Record<number, boolean>>({});
   const [prCommits, setPrCommits] = useState<Record<number, GitHubCommit[]>>({});
   const [loadingCommits, setLoadingCommits] = useState<Record<number, boolean>>({});
   const [commitErrors, setCommitErrors] = useState<Record<number, string | null>>({});
 
+  // Generic Notice/Error Modal State
+  const [noticeModal, setNoticeModal] = useState<{ title: string; message: string } | null>(null);
 
   const { id } = useParams<{ id: string }>();
   const taskId = Number(id);
@@ -163,25 +169,27 @@ export default function TaskDetails() {
       const updatedPrs = await fetchTaskPullRequests(taskId);
       setPullRequests(updatedPrs);
     } catch (err) {
-      if (isAxiosError(err)) {
-        alert(err.response?.data?.error ?? "Failed to sync PR.");
-      }
+      const msg = isAxiosError(err) ? (err.response?.data?.error ?? "Failed to sync PR.") : "Failed to sync PR.";
+      setNoticeModal({ title: "PR Sync Failed", message: msg });
     } finally {
       setSyncingPrId(null);
     }
   }
 
-  async function handleUnlinkPr(prId: number) {
-    if (!window.confirm("Are you sure you want to unlink this pull request?")) return;
+  async function handleConfirmUnlinkPr() {
+    if (!prToUnlink) return;
+    setUnlinkingPr(true);
     try {
-      await unlinkTaskPullRequest(taskId, prId);
-      setPullRequests(pullRequests.filter(p => p.id !== prId));
+      await unlinkTaskPullRequest(taskId, prToUnlink.id);
+      setPullRequests((prev) => prev.filter(p => p.id !== prToUnlink.id));
       const updatedActivity = await fetchTaskActivity(taskId);
       setActivity(updatedActivity);
+      setPrToUnlink(null);
     } catch (err) {
-      if (isAxiosError(err)) {
-        alert(err.response?.data?.error ?? "Failed to unlink PR.");
-      }
+      const msg = isAxiosError(err) ? (err.response?.data?.error ?? "Failed to unlink PR.") : "An unexpected error occurred.";
+      setNoticeModal({ title: "Unlink Failed", message: msg });
+    } finally {
+      setUnlinkingPr(false);
     }
   }
 
@@ -217,9 +225,6 @@ export default function TaskDetails() {
     }
   }
 
-
-
-
   // Allowed transitions calculation
   function getAllowedNextStatuses(current: TaskStatus): TaskStatus[] {
     switch (current) {
@@ -243,11 +248,8 @@ export default function TaskDetails() {
       const newActivity = await fetchTaskActivity(task.id);
       setActivity(newActivity);
     } catch (err) {
-      if (isAxiosError(err)) {
-        alert(err.response?.data?.error ?? "Cannot change task status.");
-      } else {
-        alert("An error occurred while changing status.");
-      }
+      const msg = isAxiosError(err) ? (err.response?.data?.error ?? "Cannot change task status.") : "An error occurred while changing status.";
+      setNoticeModal({ title: "Status Update Failed", message: msg });
     } finally {
       setUpdatingStatus(false);
     }
@@ -262,11 +264,8 @@ export default function TaskDetails() {
       const newActivity = await fetchTaskActivity(task.id);
       setActivity(newActivity);
     } catch (err) {
-      if (isAxiosError(err)) {
-        alert(err.response?.data?.error ?? "Cannot assign task.");
-      } else {
-        alert("An error occurred while reassigning.");
-      }
+      const msg = isAxiosError(err) ? (err.response?.data?.error ?? "Cannot assign task.") : "An error occurred while reassigning.";
+      setNoticeModal({ title: "Assignment Failed", message: msg });
     } finally {
       setUpdatingAssignee(false);
     }
@@ -445,7 +444,7 @@ export default function TaskDetails() {
                         <button
                           type="button"
                           className="btn-action-delete"
-                          onClick={() => handleUnlinkPr(pr.id)}
+                          onClick={() => setPrToUnlink(pr)}
                         >
                           Unlink
                         </button>
@@ -487,7 +486,7 @@ export default function TaskDetails() {
                                   rel="noreferrer"
                                   className="commit-hash"
                                   title="View commit on GitHub"
-                                >
+                                  >
                                   <code>{c.sha.substring(0, 7)}</code>
                                 </a>
                                 <span className="commit-msg" title={c.message}>
@@ -802,6 +801,58 @@ export default function TaskDetails() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Unlink Pull Request Modal */}
+      <Modal
+        isOpen={!!prToUnlink}
+        onClose={() => {
+          if (!unlinkingPr) setPrToUnlink(null);
+        }}
+        title="Unlink Pull Request"
+      >
+        <p>
+          Are you sure you want to unlink Pull Request{" "}
+          <strong>{prToUnlink?.repositoryOwner}/{prToUnlink?.repositoryName}#{prToUnlink?.pullRequestNumber}</strong>?
+        </p>
+        <div className="modal-actions" style={{ marginTop: "20px" }}>
+          <button
+            type="button"
+            className="btn"
+            disabled={unlinkingPr}
+            onClick={() => setPrToUnlink(null)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            disabled={unlinkingPr}
+            onClick={handleConfirmUnlinkPr}
+          >
+            {unlinkingPr ? "Unlinking…" : "Confirm Unlink"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Notice / Alert Modal */}
+      <Modal
+        isOpen={!!noticeModal}
+        onClose={() => setNoticeModal(null)}
+        title={noticeModal?.title ?? "Notice"}
+      >
+        <div className="form-error" style={{ marginBottom: "16px" }}>
+          {noticeModal?.message}
+        </div>
+        <div className="modal-actions">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setNoticeModal(null)}
+          >
+            OK
+          </button>
+        </div>
       </Modal>
     </div>
   );
