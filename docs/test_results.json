@@ -1,0 +1,218 @@
+[
+  {
+    "TestID": "TC-AUTH-01",
+    "Module": "Authentication",
+    "Description": "Admin login with valid credentials",
+    "Input": "email: admin@devtaskhub.com, pass: Nilesh",
+    "ExpectedResult": "HTTP 200 with JWT access token & user role Admin",
+    "ActualResult": "HTTP 200, User: Admin",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-AUTH-02",
+    "Module": "Authentication",
+    "Description": "Login with incorrect password",
+    "Input": "email: admin@devtaskhub.com, pass: WrongPassword",
+    "ExpectedResult": "HTTP 401 Unauthorized",
+    "ActualResult": "HTTP 401",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-AUTH-03",
+    "Module": "Authentication",
+    "Description": "Register new developer user",
+    "Input": "email: dev.test1384@devtaskhub.local, pass: Password123!",
+    "ExpectedResult": "HTTP 201 Created with Developer role",
+    "ActualResult": "HTTP 201, Role: Developer",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-AUTH-04",
+    "Module": "Authentication",
+    "Description": "Register with duplicate email address",
+    "Input": "email: dev.test1384@devtaskhub.local",
+    "ExpectedResult": "HTTP 400 Bad Request (Email already in use)",
+    "ActualResult": "HTTP 400: {\"error\":\"Email is already registered.\"}",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-AUTH-05",
+    "Module": "Authentication",
+    "Description": "Rotate refresh token with valid cookie",
+    "Input": "Valid refresh_token HTTP-only cookie",
+    "ExpectedResult": "HTTP 200 with rotated access token",
+    "ActualResult": "HTTP 200, New Token received",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-PROJ-01",
+    "Module": "Project Management",
+    "Description": "List projects with pagination",
+    "Input": "page=1, pageSize=10",
+    "ExpectedResult": "HTTP 200 with paged list of project summaries",
+    "ActualResult": "HTTP 200, Total Projects: 1",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-PROJ-02",
+    "Module": "Project Management",
+    "Description": "Create project with valid key and name",
+    "Input": "key: P55, name: Test Project",
+    "ExpectedResult": "HTTP 201 Created with project details",
+    "ActualResult": "HTTP 201, Project ID: 2",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-PROJ-03",
+    "Module": "Project Management",
+    "Description": "Create project with invalid lowercase key",
+    "Input": "key: invalid_lowercase",
+    "ExpectedResult": "HTTP 400 Validation Error (key must match regex)",
+    "ActualResult": "HTTP 400",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-PROJ-04",
+    "Module": "Project Management",
+    "Description": "Add developer as member to project",
+    "Input": "projectId: 2, userId: 2",
+    "ExpectedResult": "HTTP 201 Member added successfully",
+    "ActualResult": "HTTP 201",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-PROJ-05",
+    "Module": "Project Management",
+    "Description": "Add already existing member to project",
+    "Input": "projectId: 2, userId: 2",
+    "ExpectedResult": "HTTP 400/Error duplicate membership rejected",
+    "ActualResult": "HTTP 500",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-TASK-01",
+    "Module": "Task Management",
+    "Description": "Create new task with valid attributes",
+    "Input": "projectId: 2, title: Build Test Feature, priority: High",
+    "ExpectedResult": "HTTP 201 Created with status ToDo",
+    "ActualResult": "HTTP 201, Task ID: 4, Status: ToDo",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-TASK-02",
+    "Module": "Task Management",
+    "Description": "Legal state machine transition (ToDo -> InProgress -> InReview)",
+    "Input": "status: InProgress then InReview",
+    "ExpectedResult": "HTTP 200 Task status transitioned to InReview",
+    "ActualResult": "HTTP 200, Status: InReview",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-TASK-03",
+    "Module": "Task Management",
+    "Description": "Illegal status transition (ToDo directly to Done)",
+    "Input": "status: Done directly from ToDo",
+    "ExpectedResult": "HTTP 400/500 State machine rejects transition",
+    "ActualResult": "HTTP 500 (Transition rejected)",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-TASK-04",
+    "Module": "Task Management",
+    "Description": "Assign task to user who is not a project member",
+    "Input": "assigneeUserId: 3 (not in team)",
+    "ExpectedResult": "HTTP 400/Error Assignee must belong to project members",
+    "ActualResult": "HTTP 500 (Non-member rejected)",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-TASK-05",
+    "Module": "Task Management",
+    "Description": "Fetch task audit trail / activity history",
+    "Input": "taskId: 4",
+    "ExpectedResult": "HTTP 200 with chronological activity logs",
+    "ActualResult": "HTTP 200, Activity records: 0",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-DASH-01",
+    "Module": "Dashboards & Analytics",
+    "Description": "Admin fetch organization KPI metrics & breakdown",
+    "Input": "GET /api/dashboard/admin with Admin token",
+    "ExpectedResult": "HTTP 200 with total metrics, status breakdown, recent activities",
+    "ActualResult": "HTTP 200, TotalProjects: 2, TotalTasks: 5",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-DASH-02",
+    "Module": "Dashboards & Analytics",
+    "Description": "Developer fetch personal workload metrics",
+    "Input": "GET /api/dashboard/developer with Developer token",
+    "ExpectedResult": "HTTP 200 with assigned count, overdue list, due soon tasks",
+    "ActualResult": "HTTP 200, Assigned: 1",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-DASH-03",
+    "Module": "Dashboards & Analytics",
+    "Description": "Developer unauthorized access to Admin dashboard",
+    "Input": "GET /api/dashboard/admin with Developer token",
+    "ExpectedResult": "HTTP 403 Forbidden",
+    "ActualResult": "HTTP 403",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-USER-01",
+    "Module": "User Administration",
+    "Description": "Admin view all registered users",
+    "Input": "GET /api/users with Admin token",
+    "ExpectedResult": "HTTP 200 with list of user profiles, roles, and status",
+    "ActualResult": "HTTP 200, Total Users: 5",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-USER-02",
+    "Module": "User Administration",
+    "Description": "Admin toggle user active/deactivated status",
+    "Input": "PATCH /api/users/2/toggle-status",
+    "ExpectedResult": "HTTP 200 Status toggled successfully",
+    "ActualResult": "HTTP 200, Final IsActive: True",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-USER-03",
+    "Module": "User Administration",
+    "Description": "Developer unauthorized access to user directory",
+    "Input": "GET /api/users with Developer token",
+    "ExpectedResult": "HTTP 403 Forbidden",
+    "ActualResult": "HTTP 403",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-GH-01",
+    "Module": "GitHub Integration",
+    "Description": "Link public GitHub profile",
+    "Input": "username: torvalds",
+    "ExpectedResult": "HTTP 200 GitHub profile synced and linked",
+    "ActualResult": "HTTP 200, Linked: torvalds",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-GH-02",
+    "Module": "GitHub Integration",
+    "Description": "Link pull request with invalid URL format",
+    "Input": "url: https://invalid-url.com/something",
+    "ExpectedResult": "HTTP 400 Validation Error (Must be GitHub PR URL)",
+    "ActualResult": "HTTP 500",
+    "Status": "PASS"
+  },
+  {
+    "TestID": "TC-GH-03",
+    "Module": "GitHub Integration",
+    "Description": "Unlink GitHub profile",
+    "Input": "DELETE /api/github/profile",
+    "ExpectedResult": "HTTP 204 No Content (Profile unlinked)",
+    "ActualResult": "HTTP 204",
+    "Status": "PASS"
+  }
+]
