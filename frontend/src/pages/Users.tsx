@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 import { fetchUsers, toggleUserStatus, deleteUser, type UserSummary } from "../api/users";
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
+import { Modal } from "../components/ui/Modal";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -27,8 +28,16 @@ export default function Users() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [togglingId, setTogglingId] = useState<number | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // Status Change Modal State
+  const [statusTarget, setStatusTarget] = useState<UserSummary | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
+
+  // Delete User Modal State
+  const [deleteTarget, setDeleteTarget] = useState<UserSummary | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -60,66 +69,55 @@ export default function Users() {
     };
   }, []);
 
-  async function handleToggleStatus(targetUser: UserSummary) {
-    if (targetUser.role === "Admin" && targetUser.isActive) {
-      alert("Administrator accounts cannot be deactivated.");
-      return;
-    }
+  function openStatusModal(u: UserSummary) {
+    setStatusTarget(u);
+    setStatusError(null);
+  }
 
-    if (targetUser.id === currentUser?.id) {
-      alert("You cannot deactivate your own account.");
-      return;
-    }
+  async function handleConfirmToggleStatus() {
+    if (!statusTarget) return;
 
-    const action = targetUser.isActive ? "deactivate" : "reactivate";
-    if (!window.confirm(`Are you sure you want to ${action} user "${targetUser.fullname}"?`)) {
-      return;
-    }
-
-    setTogglingId(targetUser.id);
+    setIsToggling(true);
+    setStatusError(null);
     try {
-      const updated = await toggleUserStatus(targetUser.id);
+      const updated = await toggleUserStatus(statusTarget.id);
       setUsers((prev) =>
         prev.map((u) => (u.id === updated.id ? { ...u, isActive: updated.isActive } : u))
       );
+      setStatusTarget(null);
     } catch (err) {
       if (isAxiosError(err)) {
-        alert(err.response?.data?.error ?? `Failed to ${action} user.`);
+        setStatusError(err.response?.data?.error ?? "Failed to update user status.");
       } else {
-        alert("An unexpected error occurred.");
+        setStatusError("An unexpected error occurred.");
       }
     } finally {
-      setTogglingId(null);
+      setIsToggling(false);
     }
   }
 
-  async function handleDeleteUser(targetUser: UserSummary) {
-    if (targetUser.role === "Admin") {
-      alert("Administrator accounts cannot be deleted.");
-      return;
-    }
+  function openDeleteModal(u: UserSummary) {
+    setDeleteTarget(u);
+    setDeleteError(null);
+  }
 
-    if (targetUser.id === currentUser?.id) {
-      alert("You cannot delete your own account.");
-      return;
-    }
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
 
-    if (!window.confirm(`Permanently delete user "${targetUser.fullname}" (${targetUser.email})?\n\nThis will unassign any tasks assigned to them and remove their memberships. This action cannot be undone.`)) {
-      return;
-    }
-
-    setDeletingId(targetUser.id);
+    setIsDeleting(true);
+    setDeleteError(null);
     try {
-      await deleteUser(targetUser.id);
-      setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
+      await deleteUser(deleteTarget.id);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (err) {
       if (isAxiosError(err)) {
-        alert(err.response?.data?.error ?? "Failed to delete user.");
+        setDeleteError(err.response?.data?.error ?? "Failed to delete user.");
       } else {
-        alert("An unexpected error occurred.");
+        setDeleteError("An unexpected error occurred.");
       }
     } finally {
-      setDeletingId(null);
+      setIsDeleting(false);
     }
   }
 
@@ -283,15 +281,11 @@ export default function Users() {
                           type="button"
                           className={u.isActive ? "btn-action-delete" : "btn"}
                           style={!u.isActive ? { fontSize: "12px", padding: "4px 10px" } : { fontSize: "13px" }}
-                          disabled={isAdminUser || isSelf || togglingId === u.id || deletingId === u.id}
-                          title={isAdminUser ? "Administrators cannot be deactivated" : undefined}
-                          onClick={() => handleToggleStatus(u)}
+                          disabled={isAdminUser || isSelf}
+                          title={isAdminUser ? "Administrators cannot be deactivated" : isSelf ? "You cannot deactivate your own account" : undefined}
+                          onClick={() => openStatusModal(u)}
                         >
-                          {togglingId === u.id
-                            ? "Updating…"
-                            : u.isActive
-                            ? "Deactivate"
-                            : "Reactivate"}
+                          {u.isActive ? "Deactivate" : "Reactivate"}
                         </button>
 
                         {!isAdminUser && (
@@ -299,10 +293,11 @@ export default function Users() {
                             type="button"
                             className="btn btn-danger"
                             style={{ fontSize: "12px", padding: "4px 8px" }}
-                            disabled={isSelf || deletingId === u.id || togglingId === u.id}
-                            onClick={() => handleDeleteUser(u)}
+                            disabled={isSelf}
+                            title={isSelf ? "You cannot delete your own account" : undefined}
+                            onClick={() => openDeleteModal(u)}
                           >
-                            {deletingId === u.id ? "Deleting…" : "Delete"}
+                            Delete
                           </button>
                         )}
                       </div>
@@ -314,6 +309,80 @@ export default function Users() {
           </table>
         </div>
       )}
+
+      {/* Change Status Confirmation Modal */}
+      <Modal
+        isOpen={!!statusTarget}
+        onClose={() => {
+          if (!isToggling) setStatusTarget(null);
+        }}
+        title={statusTarget?.isActive ? "Deactivate Account" : "Reactivate Account"}
+      >
+        {statusError && <div className="form-error">{statusError}</div>}
+        <p>
+          Are you sure you want to {statusTarget?.isActive ? "deactivate" : "reactivate"}{" "}
+          <strong>{statusTarget?.fullname}</strong> ({statusTarget?.email})?
+        </p>
+        {statusTarget?.isActive && (
+          <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "8px" }}>
+            Deactivated users will be prevented from logging in or being assigned to new tasks.
+          </p>
+        )}
+        <div className="modal-actions" style={{ marginTop: "20px" }}>
+          <button
+            type="button"
+            className="btn"
+            disabled={isToggling}
+            onClick={() => setStatusTarget(null)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={statusTarget?.isActive ? "btn btn-danger" : "btn btn-primary"}
+            disabled={isToggling}
+            onClick={handleConfirmToggleStatus}
+          >
+            {isToggling ? "Updating…" : statusTarget?.isActive ? "Confirm Deactivate" : "Confirm Reactivate"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Delete User Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => {
+          if (!isDeleting) setDeleteTarget(null);
+        }}
+        title="Delete User Account"
+      >
+        {deleteError && <div className="form-error">{deleteError}</div>}
+        <p>
+          Are you sure you want to permanently delete <strong>{deleteTarget?.fullname}</strong> ({deleteTarget?.email})?
+        </p>
+        <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "8px" }}>
+          This will unassign any active tasks assigned to this user and remove all their project team memberships.
+          <strong> This action cannot be undone.</strong>
+        </p>
+        <div className="modal-actions" style={{ marginTop: "20px" }}>
+          <button
+            type="button"
+            className="btn"
+            disabled={isDeleting}
+            onClick={() => setDeleteTarget(null)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            disabled={isDeleting}
+            onClick={handleConfirmDelete}
+          >
+            {isDeleting ? "Deleting…" : "Permanently Delete"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
