@@ -17,3 +17,7 @@ export async function toggleUserStatus(id: number): Promise<UserSummary> {
     const { data } = await api.patch<UserSummary>(`/users/${id}/toggle-status`);
     return data;
 }
+
+export async function deleteUser(id: number): Promise<void> {
+    await api.delete(`/users/${id}`);
+}

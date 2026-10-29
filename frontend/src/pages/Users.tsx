@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
-import { fetchUsers, toggleUserStatus, type UserSummary } from "../api/users";
+import { fetchUsers, toggleUserStatus, deleteUser, type UserSummary } from "../api/users";
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
 
@@ -28,6 +28,7 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -60,6 +61,11 @@ export default function Users() {
   }, []);
 
   async function handleToggleStatus(targetUser: UserSummary) {
+    if (targetUser.role === "Admin" && targetUser.isActive) {
+      alert("Administrator accounts cannot be deactivated.");
+      return;
+    }
+
     if (targetUser.id === currentUser?.id) {
       alert("You cannot deactivate your own account.");
       return;
@@ -84,6 +90,36 @@ export default function Users() {
       }
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function handleDeleteUser(targetUser: UserSummary) {
+    if (targetUser.role === "Admin") {
+      alert("Administrator accounts cannot be deleted.");
+      return;
+    }
+
+    if (targetUser.id === currentUser?.id) {
+      alert("You cannot delete your own account.");
+      return;
+    }
+
+    if (!window.confirm(`Permanently delete user "${targetUser.fullname}" (${targetUser.email})?\n\nThis will unassign any tasks assigned to them and remove their memberships. This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(targetUser.id);
+    try {
+      await deleteUser(targetUser.id);
+      setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
+    } catch (err) {
+      if (isAxiosError(err)) {
+        alert(err.response?.data?.error ?? "Failed to delete user.");
+      } else {
+        alert("An unexpected error occurred.");
+      }
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -204,6 +240,7 @@ export default function Users() {
             <tbody>
               {filteredUsers.map((u) => {
                 const isSelf = u.id === currentUser?.id;
+                const isAdminUser = u.role === "Admin";
                 return (
                   <tr key={u.id}>
                     <td>
@@ -231,7 +268,7 @@ export default function Users() {
                     </td>
                     <td className="text-muted">{u.email}</td>
                     <td>
-                      <Badge variant={u.role === "Admin" ? "primary" : "neutral"}>
+                      <Badge variant={isAdminUser ? "primary" : "neutral"}>
                         {u.role}
                       </Badge>
                     </td>
@@ -241,19 +278,34 @@ export default function Users() {
                       </Badge>
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      <button
-                        type="button"
-                        className={u.isActive ? "btn-action-delete" : "btn"}
-                        style={!u.isActive ? { fontSize: "12px", padding: "4px 10px" } : { fontSize: "13px" }}
-                        disabled={isSelf || togglingId === u.id}
-                        onClick={() => handleToggleStatus(u)}
-                      >
-                        {togglingId === u.id
-                          ? "Updating…"
-                          : u.isActive
-                          ? "Deactivate"
-                          : "Reactivate"}
-                      </button>
+                      <div style={{ display: "inline-flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
+                        <button
+                          type="button"
+                          className={u.isActive ? "btn-action-delete" : "btn"}
+                          style={!u.isActive ? { fontSize: "12px", padding: "4px 10px" } : { fontSize: "13px" }}
+                          disabled={isAdminUser || isSelf || togglingId === u.id || deletingId === u.id}
+                          title={isAdminUser ? "Administrators cannot be deactivated" : undefined}
+                          onClick={() => handleToggleStatus(u)}
+                        >
+                          {togglingId === u.id
+                            ? "Updating…"
+                            : u.isActive
+                            ? "Deactivate"
+                            : "Reactivate"}
+                        </button>
+
+                        {!isAdminUser && (
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            style={{ fontSize: "12px", padding: "4px 8px" }}
+                            disabled={isSelf || deletingId === u.id || togglingId === u.id}
+                            onClick={() => handleDeleteUser(u)}
+                          >
+                            {deletingId === u.id ? "Deleting…" : "Delete"}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
