@@ -1,6 +1,8 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-const API_BASE = "http://localhost:5109/api";
+// Replace: const API_BASE = "http://localhost:5109/api";
+// With:
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5109/api";
 
 export interface AuthUser {
     id: number;
