@@ -11,6 +11,7 @@ import {
     addProjectMember,
     removeProjectMember,
     type ProjectDetail,
+    type ProjectMember,
     type ProjectStatus
 } from "../api/projects";
 
@@ -46,6 +47,10 @@ export default function ProjectDetails() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+    // Remove Member Modal State
+    const [memberToRemove, setMemberToRemove] = useState<ProjectMember | null>(null);
+    const [removeMemberError, setRemoveMemberError] = useState<string | null>(null);
+    const [isRemovingMember, setIsRemovingMember] = useState(false);
 
     const loadProjects = useCallback(async () => {
         if (isNaN(projectId)) {
@@ -140,17 +145,22 @@ export default function ProjectDetails() {
             setAddingMember(false);
         }
     }
-    async function handleRemoveMember(memberUserId: number) {
-        if (!window.confirm("Are you sure you want to remove this member from the project?")) return;
+    async function handleConfirmRemoveMember() {
+        if (!memberToRemove) return;
+        setIsRemovingMember(true);
+        setRemoveMemberError(null);
         try {
-            await removeProjectMember(projectId, memberUserId);
+            await removeProjectMember(projectId, memberToRemove.userId);
+            setMemberToRemove(null);
             loadProjects();
         } catch (err) {
             if (isAxiosError(err)) {
-                alert(err.response?.data?.error ?? "Failed to remove member.");
+                setRemoveMemberError(err.response?.data?.error ?? "Failed to remove member.");
             } else {
-                alert("An unexpected error occurred.");
+                setRemoveMemberError("An unexpected error occurred.");
             }
+        } finally {
+            setIsRemovingMember(false);
         }
     }
     async function handleDeleteProject() {
@@ -278,7 +288,10 @@ export default function ProjectDetails() {
                                                     <button
                                                         type="button"
                                                         className="btn-action-delete"
-                                                        onClick={() => handleRemoveMember(member.userId)}
+                                                        onClick={() => {
+                                                            setMemberToRemove(member);
+                                                            setRemoveMemberError(null);
+                                                        }}
                                                     >
                                                         Remove
                                                     </button>
@@ -388,6 +401,38 @@ export default function ProjectDetails() {
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Remove Member Confirmation Modal */}
+            <Modal
+                isOpen={!!memberToRemove}
+                onClose={() => {
+                    if (!isRemovingMember) setMemberToRemove(null);
+                }}
+                title="Remove Team Member"
+            >
+                {removeMemberError && <div className="form-error">{removeMemberError}</div>}
+                <p>
+                    Are you sure you want to remove <strong>{memberToRemove?.fullName}</strong> ({memberToRemove?.email}) from this project?
+                </p>
+                <div className="modal-actions" style={{ marginTop: "20px" }}>
+                    <button
+                        type="button"
+                        className="btn"
+                        disabled={isRemovingMember}
+                        onClick={() => setMemberToRemove(null)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-danger"
+                        disabled={isRemovingMember}
+                        onClick={handleConfirmRemoveMember}
+                    >
+                        {isRemovingMember ? "Removing…" : "Confirm Remove"}
+                    </button>
+                </div>
             </Modal>
 
             {/* Delete Confirmation Modal */}
