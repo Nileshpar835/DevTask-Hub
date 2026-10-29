@@ -93,12 +93,12 @@ public class AuthController : ControllerBase
         Response.Cookies.Append(RefreshCookieName, rawToken, new CookieOptions
         {
             HttpOnly = true,                 // JS cannot read it — XSS can't steal it
-            SameSite = SameSiteMode.Lax,     // not sent on cross-site POSTs — CSRF guard
-            Secure = Request.IsHttps,        // true in production, flexible for local HTTP
+            SameSite = SameSiteMode.None,    // Required for cross-site (Vercel -> DuckDNS)
+            Secure = true,                   // Required when SameSite=None
             Path = "/api/auth",              // cookie only travels to auth endpoints
             Expires = DateTimeOffset.UtcNow.AddDays(14)
         });
 
     private void ClearRefreshCookie() =>
-        Response.Cookies.Delete(RefreshCookieName, new CookieOptions { Path = "/api/auth" });
+        Response.Cookies.Delete(RefreshCookieName, new CookieOptions { Path = "/api/auth", SameSite = SameSiteMode.None, Secure = true });
 }
