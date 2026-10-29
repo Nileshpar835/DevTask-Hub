@@ -47,10 +47,12 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddCors(options =>
     options.AddPolicy("Frontend", policy => policy
-        .WithOrigins("http://localhost:5173", "https://dev-task-hub-one.vercel.app") // <-- Add your Vercel URL here
+        .SetIsOriginAllowed(origin => !string.IsNullOrEmpty(origin) && 
+            (new Uri(origin).Host == "localhost" || new Uri(origin).Host.EndsWith("vercel.app")))
         .AllowAnyHeader()
         .AllowAnyMethod()
-        .AllowCredentials()));
+        .AllowCredentials()
+    ));
 
 
 var connectionString = builder.Configuration.GetConnectionString("DevTaskHub")
