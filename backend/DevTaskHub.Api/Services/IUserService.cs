@@ -7,4 +7,5 @@ public interface IUserService
 {
     Task<List<UserSummaryDto>> GetAllAsync(CancellationToken ct = default);
     Task<UserSummaryDto?> ToggleActiveAsync(int id, CancellationToken ct = default);
+    Task DeleteAsync(int id, int currentUserId, CancellationToken ct = default);
 }
