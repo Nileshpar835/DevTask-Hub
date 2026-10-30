@@ -4,6 +4,7 @@ import { fetchUsers, toggleUserStatus, deleteUser, type UserSummary } from "../a
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
+import { Pagination } from "../components/ui/Pagination";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -28,6 +29,10 @@ export default function Users() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Status Change Modal State
   const [statusTarget, setStatusTarget] = useState<UserSummary | null>(null);
@@ -137,6 +142,32 @@ export default function Users() {
 
   const activeCount = users.filter((u) => u.isActive).length;
 
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
+
+  function handleSearchChange(val: string) {
+    setSearch(val);
+    setPage(1);
+  }
+
+  function handleRoleFilterChange(val: string) {
+    setRoleFilter(val);
+    setPage(1);
+  }
+
+  function handleStatusFilterChange(val: string) {
+    setStatusFilter(val);
+    setPage(1);
+  }
+
+  function handlePageSizeChange(newSize: number) {
+    setPageSize(newSize);
+    setPage(1);
+  }
+
   return (
     <div className="tasks-page-wrapper">
       {/* Breadcrumb */}
@@ -155,9 +186,23 @@ export default function Users() {
           <p className="page-subtitle">View and manage system users, roles, and account access permissions.</p>
         </div>
 
-        <div className="tasks-header-actions">
+        <div className="tasks-header-actions" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <select
+            value={pageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            className="filter-select"
+            style={{ fontSize: "12px", padding: "4px 8px", cursor: "pointer" }}
+            aria-label="Users per page"
+          >
+            <option value={10}>10 per page</option>
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
+
           <span className="tasks-count-badge">
-            {filteredUsers.length} of {users.length} users ({activeCount} active)
+            {filteredUsers.length === 0
+              ? "0 users"
+              : `Showing ${startIndex + 1}–${Math.min(startIndex + pageSize, filteredUsers.length)} of ${filteredUsers.length} users (${activeCount} active)`}
           </span>
         </div>
       </div>
@@ -174,7 +219,7 @@ export default function Users() {
           type="search"
           placeholder="Search by name or email…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="search-input"
           style={{ maxWidth: "320px" }}
         />
@@ -182,7 +227,7 @@ export default function Users() {
         <div className="filter-group">
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => handleRoleFilterChange(e.target.value)}
             className="filter-select"
           >
             <option value="All">All Roles</option>
@@ -192,7 +237,7 @@ export default function Users() {
 
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusFilterChange(e.target.value)}
             className="filter-select"
           >
             <option value="All">All Statuses</option>
@@ -208,6 +253,7 @@ export default function Users() {
                 setSearch("");
                 setRoleFilter("All");
                 setStatusFilter("All");
+                setPage(1);
               }}
             >
               ✕ Clear
@@ -224,90 +270,98 @@ export default function Users() {
           <p>No system accounts matched the search criteria.</p>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Account Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((u) => {
-                const isSelf = u.id === currentUser?.id;
-                const isAdminUser = u.role === "Admin";
-                return (
-                  <tr key={u.id}>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div
-                          className="assignee-bubble"
-                          style={{
-                            backgroundColor: getAvatarColor(u.fullname),
-                            width: "30px",
-                            height: "30px",
-                            fontSize: "12px",
-                          }}
-                        >
-                          {getInitials(u.fullname)}
+        <>
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Account Status</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedUsers.map((u) => {
+                  const isSelf = u.id === currentUser?.id;
+                  const isAdminUser = u.role === "Admin";
+                  return (
+                    <tr key={u.id}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div
+                            className="assignee-bubble"
+                            style={{
+                              backgroundColor: getAvatarColor(u.fullname),
+                              width: "30px",
+                              height: "30px",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {getInitials(u.fullname)}
+                          </div>
+                          <div>
+                            <strong>{u.fullname}</strong>
+                            {isSelf && (
+                              <span className="owner-badge">
+                                You
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <strong>{u.fullname}</strong>
-                          {isSelf && (
-                            <span className="owner-badge">
-                              You
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-muted">{u.email}</td>
-                    <td>
-                      <Badge variant={isAdminUser ? "primary" : "neutral"}>
-                        {u.role}
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge variant={u.isActive ? "success" : "danger"}>
-                        {u.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
-                        <button
-                          type="button"
-                          className={u.isActive ? "btn-action-delete" : "btn"}
-                          style={!u.isActive ? { fontSize: "12px", padding: "4px 10px" } : { fontSize: "13px" }}
-                          disabled={isAdminUser || isSelf}
-                          title={isAdminUser ? "Administrators cannot be deactivated" : isSelf ? "You cannot deactivate your own account" : undefined}
-                          onClick={() => openStatusModal(u)}
-                        >
-                          {u.isActive ? "Deactivate" : "Reactivate"}
-                        </button>
-
-                        {!isAdminUser && (
+                      </td>
+                      <td className="text-muted">{u.email}</td>
+                      <td>
+                        <Badge variant={isAdminUser ? "primary" : "neutral"}>
+                          {u.role}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge variant={u.isActive ? "success" : "danger"}>
+                          {u.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <div style={{ display: "inline-flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
                           <button
                             type="button"
-                            className="btn btn-danger"
-                            style={{ fontSize: "12px", padding: "4px 8px" }}
-                            disabled={isSelf}
-                            title={isSelf ? "You cannot delete your own account" : undefined}
-                            onClick={() => openDeleteModal(u)}
+                            className={u.isActive ? "btn-action-delete" : "btn"}
+                            style={!u.isActive ? { fontSize: "12px", padding: "4px 10px" } : { fontSize: "13px" }}
+                            disabled={isAdminUser || isSelf}
+                            title={isAdminUser ? "Administrators cannot be deactivated" : isSelf ? "You cannot deactivate your own account" : undefined}
+                            onClick={() => openStatusModal(u)}
                           >
-                            Delete
+                            {u.isActive ? "Deactivate" : "Reactivate"}
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+
+                          {!isAdminUser && (
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              style={{ fontSize: "12px", padding: "4px 8px" }}
+                              disabled={isSelf}
+                              title={isSelf ? "You cannot delete your own account" : undefined}
+                              onClick={() => openDeleteModal(u)}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <Pagination
+            page={safePage}
+            totalpages={totalPages}
+            onPageChange={(newPage) => setPage(newPage)}
+          />
+        </>
       )}
 
       {/* Change Status Confirmation Modal */}
