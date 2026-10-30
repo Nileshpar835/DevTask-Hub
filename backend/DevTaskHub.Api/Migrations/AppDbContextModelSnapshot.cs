@@ -85,6 +85,10 @@ namespace DevTaskHub.Api.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<string>("GitHubRepoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Key")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -304,6 +308,14 @@ namespace DevTaskHub.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AuthorAvatarUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("AuthorGitHubUsername")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -322,6 +334,9 @@ namespace DevTaskHub.Api.Migrations
 
                     b.Property<DateTime?>("LastSyncedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("LinkedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<int>("PullRequestNumber")
                         .HasColumnType("int");
@@ -352,6 +367,8 @@ namespace DevTaskHub.Api.Migrations
                         .HasColumnType("nvarchar(300)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LinkedByUserId");
 
                     b.HasIndex("TaskId");
 
@@ -520,11 +537,18 @@ namespace DevTaskHub.Api.Migrations
 
             modelBuilder.Entity("DevTaskHub.Api.Domain.TaskPullRequest", b =>
                 {
+                    b.HasOne("DevTaskHub.Api.Domain.User", "LinkedByUser")
+                        .WithMany()
+                        .HasForeignKey("LinkedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("DevTaskHub.Api.Domain.TaskItem", "Task")
                         .WithMany("PullRequests")
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("LinkedByUser");
 
                     b.Navigation("Task");
                 });

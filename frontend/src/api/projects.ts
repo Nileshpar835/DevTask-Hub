@@ -17,6 +17,7 @@ export interface ProjectSummary {
     key: string;
     name: string;
     description: string | null;
+    gitHubRepoUrl?: string | null;
     status: ProjectStatus;
     ownerUserId: number;
     ownerName: string;
@@ -40,6 +41,7 @@ export interface ProjectDetail {
     key: string;
     name: string;
     description: string | null;
+    gitHubRepoUrl?: string | null;
     status: ProjectStatus;
     ownerUserId: number;
     ownerName: string;
@@ -48,16 +50,40 @@ export interface ProjectDetail {
     members: ProjectMember[];
 }
 
+export interface ProjectPullRequest {
+    id: number;
+    taskId: number;
+    taskKey: string;
+    taskTitle: string;
+    repositoryOwner: string;
+    repositoryName: string;
+    pullRequestNumber: number;
+    htmlUrl: string;
+    title: string | null;
+    state: "Open" | "Closed" | "Merged" | string;
+    isDraft: boolean;
+    reviewStatus: string | null;
+    authorGitHubUsername: string | null;
+    authorAvatarUrl: string | null;
+    linkedByUserId: number | null;
+    linkedByUserName: string | null;
+    lastSyncedAtUtc: string | null;
+    syncError: string | null;
+    createdAtUtc: string;
+}
+
 export interface CreateProjectPayload {
     key: string;
     name: string;
     description?: string;
+    gitHubRepoUrl?: string;
 }
 
 export interface UpdateProjectPayload {
     name: string;
     description?: string;
     status: ProjectStatus;
+    gitHubRepoUrl?: string;
 }
 
 export interface ProjectQueryParams {
@@ -110,4 +136,14 @@ export async function addProjectMember(projectId: number, userId: number): Promi
 
 export async function removeProjectMember(projectId: number, memberUserId: number): Promise<void> {
     await api.delete(`/projects/${projectId}/members/${memberUserId}`);
+}
+
+export async function fetchProjectPullRequests(projectId: number): Promise<ProjectPullRequest[]> {
+    const { data } = await api.get<ProjectPullRequest[]>(`/projects/${projectId}/pull-requests`);
+    return data;
+}
+
+export async function syncProjectPullRequests(projectId: number): Promise<ProjectPullRequest[]> {
+    const { data } = await api.post<ProjectPullRequest[]>(`/projects/${projectId}/pull-requests/sync`);
+    return data;
 }

@@ -31,6 +31,32 @@ public record PullRequestDto(
     string State,
     bool IsDraft,
     string? ReviewStatus,
+    string? AuthorGitHubUsername,
+    string? AuthorAvatarUrl,
+    int? LinkedByUserId,
+    string? LinkedByUserName,
     DateTime? LastSyncedAtUtc,
     string? SyncError
+);
+
+public record ProjectPullRequestDto(
+    int Id,
+    int TaskId,
+    string TaskKey,
+    string TaskTitle,
+    string RepositoryOwner,
+    string RepositoryName,
+    int PullRequestNumber,
+    string HtmlUrl,
+    string? Title,
+    string State,
+    bool IsDraft,
+    string? ReviewStatus,
+    string? AuthorGitHubUsername,
+    string? AuthorAvatarUrl,
+    int? LinkedByUserId,
+    string? LinkedByUserName,
+    DateTime? LastSyncedAtUtc,
+    string? SyncError,
+    DateTime CreatedAtUtc
 );

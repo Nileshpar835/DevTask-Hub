@@ -216,7 +216,7 @@ export default function TaskDetails() {
     }
   }
 
-  function getPrBadge(state: "Open" | "Closed" | "Merged", isDraft: boolean) {
+  function getPrBadge(state: "Open" | "Closed" | "Merged" | string, isDraft: boolean) {
     if (isDraft) return <span className="badge badge-neutral">Draft</span>;
     switch (state) {
       case "Open": return <span className="badge badge-success">Open</span>;
@@ -416,9 +416,22 @@ export default function TaskDetails() {
                       <a href={pr.htmlUrl} target="_blank" rel="noreferrer" className="pr-link">
                         <strong>{pr.repositoryOwner}/{pr.repositoryName}#{pr.pullRequestNumber}</strong>
                       </a>
+                      {pr.authorGitHubUsername && (
+                        <span style={{ fontSize: "12px", color: "var(--muted)", marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                          {pr.authorAvatarUrl && (
+                            <img src={pr.authorAvatarUrl} alt="" style={{ width: "18px", height: "18px", borderRadius: "50%" }} />
+                          )}
+                          @{pr.authorGitHubUsername}
+                        </span>
+                      )}
                     </div>
                     <p className="pr-title">{pr.title || "Untitled Pull Request"}</p>
                     <div className="pr-meta-row">
+                      {pr.linkedByUserName && (
+                        <span className="text-muted" style={{ fontSize: "11px" }}>
+                          Linked by {pr.linkedByUserName} •
+                        </span>
+                      )}
                       <span className="text-muted">
                         {pr.lastSyncedAtUtc ? `Synced ${new Date(pr.lastSyncedAtUtc).toLocaleTimeString()}` : "Not synced"}
                       </span>

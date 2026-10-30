@@ -16,18 +16,16 @@ public class DashboardService : IDashboardService
 
     public async Task<AdminDashboardDto> GetAdminDashboardAsync(CancellationToken ct)
     {
-        var now = DateTime.UtcNow;
-
         var totalProjects = await _db.Projects.CountAsync(ct);
         var totalActiveProjects = await _db.Projects.CountAsync(p => p.Status == ProjectStatus.Active, ct);
         var totalUsers = await _db.Users.CountAsync(ct);
         var totalDevelopers = await _db.Users.CountAsync(u => u.Role == UserRole.Developer, ct);
         var totalTasks = await _db.Tasks.CountAsync(ct);
 
+        var now = DateTime.UtcNow;
         var overdueCount = await _db.Tasks
             .CountAsync(t => t.DueDateUtc != null && t.DueDateUtc < now && t.Status != TaskItemStatus.Done, ct);
 
-        // Status counts via group aggregate
         var statusCounts = await _db.Tasks
             .GroupBy(t => t.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
@@ -40,7 +38,7 @@ public class DashboardService : IDashboardService
             statusCounts.GetValueOrDefault(TaskItemStatus.Done, 0)
         );
 
-                var recentActivities = await _db.TaskActivityLogs
+        var recentActivities = await _db.TaskActivityLogs
             .AsNoTracking()
             .OrderByDescending(a => a.CreatedAtUtc)
             .Take(6)
@@ -51,7 +49,7 @@ public class DashboardService : IDashboardService
                 a.OldValue,
                 a.NewValue,
                 a.ActorUserId,
-                a.Actor.FullName,
+                a.Actor != null ? a.Actor.FullName : "System",
                 a.CreatedAtUtc
             ))
             .ToListAsync(ct);
@@ -73,13 +71,10 @@ public class DashboardService : IDashboardService
         var now = DateTime.UtcNow;
         var inSevenDays = now.AddDays(7);
 
-        var myTasksQuery = _db.Tasks
-            .AsNoTracking()
-            .Where(t => t.AssigneeUserId == userId);
+        var totalAssigned = await _db.Tasks.CountAsync(t => t.AssigneeUserId == userId, ct);
 
-        var totalAssigned = await myTasksQuery.CountAsync(ct);
-
-        var statusCounts = await myTasksQuery
+        var statusCounts = await _db.Tasks
+            .Where(t => t.AssigneeUserId == userId)
             .GroupBy(t => t.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Status, x => x.Count, ct);
@@ -91,8 +86,9 @@ public class DashboardService : IDashboardService
             statusCounts.GetValueOrDefault(TaskItemStatus.Done, 0)
         );
 
-        var overdueTasks = await myTasksQuery
-            .Where(t => t.DueDateUtc != null && t.DueDateUtc < now && t.Status != TaskItemStatus.Done)
+        var overdueTasks = await _db.Tasks
+            .AsNoTracking()
+            .Where(t => t.AssigneeUserId == userId && t.DueDateUtc != null && t.DueDateUtc < now && t.Status != TaskItemStatus.Done)
             .OrderBy(t => t.DueDateUtc)
             .Take(5)
             .Select(t => new UrgentTaskSummaryDto(
@@ -106,8 +102,9 @@ public class DashboardService : IDashboardService
             ))
             .ToListAsync(ct);
 
-        var dueSoonTasks = await myTasksQuery
-            .Where(t => t.DueDateUtc != null && t.DueDateUtc >= now && t.DueDateUtc <= inSevenDays && t.Status != TaskItemStatus.Done)
+        var dueSoonTasks = await _db.Tasks
+            .AsNoTracking()
+            .Where(t => t.AssigneeUserId == userId && t.DueDateUtc != null && t.DueDateUtc >= now && t.DueDateUtc <= inSevenDays && t.Status != TaskItemStatus.Done)
             .OrderBy(t => t.DueDateUtc)
             .Take(5)
             .Select(t => new UrgentTaskSummaryDto(
@@ -131,6 +128,7 @@ public class DashboardService : IDashboardService
                 p.Key,
                 p.Name,
                 p.Description,
+                p.GitHubRepoUrl,
                 p.Status.ToString(),
                 p.OwnerUserId,
                 p.Owner.FullName,
