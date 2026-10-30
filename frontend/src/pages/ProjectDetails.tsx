@@ -486,8 +486,32 @@ export default function ProjectDetails() {
                                 return (
                                     <tr key={member.id}>
                                         <td>
-                                            <strong>{member.fullName}</strong>
-                                            {isOwner && <span className="owner-badge">Owner</span>}
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                {member.avatarUrl ? (
+                                                    <img
+                                                        src={member.avatarUrl}
+                                                        alt={member.fullName}
+                                                        className="assignee-bubble"
+                                                        style={{ width: "24px", height: "24px", objectFit: "cover", borderRadius: "50%", border: "1px solid var(--border)" }}
+                                                    />
+                                                ) : (
+                                                    <div
+                                                        className="assignee-bubble"
+                                                        style={{ width: "24px", height: "24px", fontSize: "10px" }}
+                                                    >
+                                                        {member.fullName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <strong>{member.fullName}</strong>
+                                                    {member.gitHubUsername && (
+                                                        <span style={{ fontSize: "11px", color: "var(--muted)", marginLeft: "4px" }}>
+                                                            (@{member.gitHubUsername})
+                                                        </span>
+                                                    )}
+                                                    {isOwner && <span className="owner-badge" style={{ marginLeft: "6px" }}>Owner</span>}
+                                                </div>
+                                            </div>
                                         </td>
                                         <td>{member.email}</td>
                                         <td>

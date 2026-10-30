@@ -6,6 +6,8 @@ export interface UserSummary {
     fullname: string;
     role: string;
     isActive: boolean;
+    avatarUrl?: string | null;
+    gitHubUsername?: string | null;
 }
 
 export async function fetchUsers(): Promise<UserSummary[]> {

@@ -85,7 +85,8 @@ public class TaskService : ITaskService
                 t.CompletedAtUtc,
                 t.CreatedAtUtc,
                 t.UpdatedAtUtc,
-                t.Category
+                t.Category,
+                t.Assignee != null && t.Assignee.GitHubAccount != null ? t.Assignee.GitHubAccount.AvatarUrl : null
             ))
             .ToListAsync(ct);
 
@@ -106,7 +107,8 @@ public class TaskService : ITaskService
             .AsNoTracking()
             .Include(t => t.Project)
                 .ThenInclude(p => p.Members)
-            .Include(t => t.Assignee)
+            .Include(t => t.Assignee!)
+                .ThenInclude(u => u.GitHubAccount)
             .Include(t => t.CreatedBy)
             .FirstOrDefaultAsync(t => t.Id == id, ct)
             ?? throw new KeyNotFoundException($"Task #{id} not found.");
@@ -420,6 +422,7 @@ public class TaskService : ITaskService
             task.CompletedAtUtc,
             task.CreatedAtUtc,
             task.UpdatedAtUtc,
-            task.Category
+            task.Category,
+            task.Assignee?.GitHubAccount?.AvatarUrl
         );
 }

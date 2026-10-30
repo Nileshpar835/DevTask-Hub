@@ -69,7 +69,17 @@ export default function Layout() {
                         ☰
                     </button>
                     <h1 className="page-title">{titleFor(pathname)}</h1>
-                    <div className="avatar" aria-hidden="true">{user ? user.fullName.charAt(0).toUpperCase() : "?"}</div>
+                    {user?.avatarUrl ? (
+                        <img
+                            src={user.avatarUrl}
+                            alt={user.fullName}
+                            className="avatar"
+                            style={{ objectFit: "cover", border: "1px solid var(--border)" }}
+                            title={user.gitHubUsername ? `${user.fullName} (@${user.gitHubUsername})` : user.fullName}
+                        />
+                    ) : (
+                        <div className="avatar" aria-hidden="true">{user ? user.fullName.charAt(0).toUpperCase() : "?"}</div>
+                    )}
                 </header>
                 <main className="content">
                     <Outlet />

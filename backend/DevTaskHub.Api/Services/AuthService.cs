@@ -51,7 +51,9 @@ public class AuthService : IAuthService
     public async Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken ct)
     {
         var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
+        var user = await _db.Users
+            .Include(u => u.GitHubAccount)
+            .FirstOrDefaultAsync(u => u.Email == email, ct);
 
         if (user is null)
             return AuthResult.Fail("Invalid email or password.");
@@ -74,6 +76,7 @@ public class AuthService : IAuthService
         var hash = _tokens.HashRefreshToken(rawRefreshToken);
         var stored = await _db.RefreshTokens
             .Include(t => t.User)
+                .ThenInclude(u => u.GitHubAccount)
             .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
 
         if (stored is null)
@@ -132,7 +135,7 @@ public class AuthService : IAuthService
     }
 
     public Task<User?> FindUserByIdAsync(int id, CancellationToken ct) =>
-        _db.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
+        _db.Users.Include(u => u.GitHubAccount).FirstOrDefaultAsync(u => u.Id == id, ct);
 
     private async Task<AuthResult> IssueTokensAsync(User user, CancellationToken ct)
     {

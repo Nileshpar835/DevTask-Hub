@@ -82,12 +82,26 @@ public class AuthController : ControllerBase
         if (user is null || !user.IsActive)
             return Unauthorized();
 
-        return Ok(new AuthUserDto(user.Id, user.Email, user.FullName, user.Role.ToString()));
+        return Ok(new AuthUserDto(
+            user.Id,
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.GitHubAccount?.AvatarUrl,
+            user.GitHubAccount?.GitHubUsername
+        ));
     }
 
     private static AuthResponse BuildAuthResponse(AuthResult result) =>
         new(result.AccessToken!, result.AccessTokenExpiresAtUtc!.Value,
-            new AuthUserDto(result.User!.Id, result.User.Email, result.User.FullName, result.User.Role.ToString()));
+            new AuthUserDto(
+                result.User!.Id,
+                result.User.Email,
+                result.User.FullName,
+                result.User.Role.ToString(),
+                result.User.GitHubAccount?.AvatarUrl,
+                result.User.GitHubAccount?.GitHubUsername
+            ));
 
     private void SetRefreshCookie(string rawToken) =>
         Response.Cookies.Append(RefreshCookieName, rawToken, new CookieOptions

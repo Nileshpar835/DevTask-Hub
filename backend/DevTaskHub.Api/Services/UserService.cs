@@ -14,13 +14,24 @@ public class UserService : IUserService
     public async Task<List<UserSummaryDto>> GetAllAsync(CancellationToken ct = default) => 
         await _db.Users
             .AsNoTracking()
+            .Include(u => u.GitHubAccount)
             .OrderBy(u => u.Id)
-            .Select(u => new UserSummaryDto(u.Id, u.Email, u.FullName, u.Role.ToString(), u.IsActive))
+            .Select(u => new UserSummaryDto(
+                u.Id,
+                u.Email,
+                u.FullName,
+                u.Role.ToString(),
+                u.IsActive,
+                u.GitHubAccount != null ? u.GitHubAccount.AvatarUrl : null,
+                u.GitHubAccount != null ? u.GitHubAccount.GitHubUsername : null
+            ))
             .ToListAsync(ct);
 
     public async Task<UserSummaryDto?> ToggleActiveAsync(int id, CancellationToken ct = default)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
+        var user = await _db.Users
+            .Include(u => u.GitHubAccount)
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
         if (user == null) return null;
 
         // An Admin can never be deactivated
@@ -31,7 +42,15 @@ public class UserService : IUserService
 
         user.IsActive = !user.IsActive;
         await _db.SaveChangesAsync(ct);
-        return new UserSummaryDto(user.Id, user.Email, user.FullName, user.Role.ToString(), user.IsActive);
+        return new UserSummaryDto(
+            user.Id,
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.IsActive,
+            user.GitHubAccount?.AvatarUrl,
+            user.GitHubAccount?.GitHubUsername
+        );
     }
 
     public async Task DeleteAsync(int id, int currentUserId, CancellationToken ct = default)
@@ -61,23 +80,37 @@ public class UserService : IUserService
         foreach (var task in assignedTasks)
         {
             task.AssigneeUserId = null;
+            task.UpdatedAtUtc = DateTime.UtcNow;
+
+            _db.TaskActivityLogs.Add(new TaskActivityLog
+            {
+                TaskId = task.Id,
+                ProjectId = task.ProjectId,
+                ActorUserId = currentUserId,
+                Action = TaskActivityAction.Unassigned,
+                OldValue = user.FullName,
+                NewValue = null,
+                Note = "Assignee deleted from system",
+                CreatedAtUtc = DateTime.UtcNow
+            });
         }
 
-        // 2. Remove project team memberships
-        var memberships = await _db.ProjectMembers.Where(m => m.UserId == id).ToListAsync(ct);
+        // 2. Remove user from all project memberships
+        var memberships = await _db.ProjectMembers.Where(pm => pm.UserId == id).ToListAsync(ct);
         _db.ProjectMembers.RemoveRange(memberships);
 
-        // 3. Remove GitHub account & refresh tokens if any
-        var githubAccount = await _db.GitHubAccounts.FirstOrDefaultAsync(g => g.UserId == id, ct);
-        if (githubAccount != null)
+        // 3. Remove linked GitHub account if any
+        var gh = await _db.GitHubAccounts.FirstOrDefaultAsync(g => g.UserId == id, ct);
+        if (gh != null)
         {
-            _db.GitHubAccounts.Remove(githubAccount);
+            _db.GitHubAccounts.Remove(gh);
         }
 
-        var tokens = await _db.RefreshTokens.Where(r => r.UserId == id).ToListAsync(ct);
+        // 4. Remove refresh tokens
+        var tokens = await _db.RefreshTokens.Where(rt => rt.UserId == id).ToListAsync(ct);
         _db.RefreshTokens.RemoveRange(tokens);
 
-        // 4. Delete user
+        // 5. Delete the user
         _db.Users.Remove(user);
         await _db.SaveChangesAsync(ct);
     }

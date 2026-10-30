@@ -1,7 +1,5 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-// Replace: const API_BASE = "http://localhost:5109/api";
-// With:
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5109/api";
 
 export interface AuthUser {
@@ -9,6 +7,8 @@ export interface AuthUser {
     email: string;
     fullName: string;
     role: "Admin" | "Developer";
+    avatarUrl?: string | null;
+    gitHubUsername?: string | null;
 }
 
 export interface AuthResponse {
@@ -30,7 +30,7 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
     if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
     return config;
-})
+});
 
 type RetriableConfig = AxiosRequestConfig & { _retry?: boolean };
 
@@ -46,7 +46,7 @@ function refreshAccessToken(): Promise<string | null> {
             setAccessToken(null);
             return null;
         } finally {
-            refreshing = null
+            refreshing = null;
         }
     })();
     return refreshing;
@@ -57,16 +57,16 @@ api.interceptors.response.use(
     async (error) => {
         const original = error.config as RetriableConfig | undefined;
         const url: string = original?.url ?? "";
-        const isAuthUrl=
-        url.includes("/auth/login") ||
-        url.includes("/auth/register") ||
-        url.includes("/auth/refresh") ||
-        url.includes("/auth/logout");
+        const isAuthUrl =
+            url.includes("/auth/login") ||
+            url.includes("/auth/register") ||
+            url.includes("/auth/refresh") ||
+            url.includes("/auth/logout");
 
-        if(error.response?.status == 401 && original && !original._retry && !isAuthUrl){
-            original._retry=true;
+        if (error.response?.status == 401 && original && !original._retry && !isAuthUrl) {
+            original._retry = true;
             const token = await refreshAccessToken();
-            if(token) return api(original);
+            if (token) return api(original);
         }
         return Promise.reject(error);
     }
