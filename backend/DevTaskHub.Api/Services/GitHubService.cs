@@ -100,6 +100,7 @@ public partial class GitHubService : IGitHubService
 
         return await _db.TaskPullRequests
             .AsNoTracking()
+            .Include(pr => pr.LinkedByUser)
             .Where(pr => pr.TaskId == taskId)
             .OrderByDescending(pr => pr.CreatedAtUtc)
             .Select(pr => MapToPrDto(pr))
@@ -126,7 +127,7 @@ public partial class GitHubService : IGitHubService
             throw new ArgumentException("This Pull Request is already linked to this task.");
         }
 
-        var (title, state, isDraft, error) = await FetchPrFromGitHubAsync(owner, repo, prNumber, ct);
+        var (title, state, isDraft, author, authorAvatar, error) = await FetchPrFromGitHubAsync(owner, repo, prNumber, ct);
 
         var pr = new TaskPullRequest
         {
@@ -138,6 +139,9 @@ public partial class GitHubService : IGitHubService
             Title = title,
             GitHubState = state,
             IsDraft = isDraft,
+            AuthorGitHubUsername = author,
+            AuthorAvatarUrl = authorAvatar,
+            LinkedByUserId = currentUserId,
             LastSyncedAtUtc = DateTime.UtcNow,
             SyncError = error,
             CreatedAtUtc = DateTime.UtcNow
@@ -157,6 +161,7 @@ public partial class GitHubService : IGitHubService
         });
 
         await _db.SaveChangesAsync(ct);
+        await _db.Entry(pr).Reference(p => p.LinkedByUser).LoadAsync(ct);
         return MapToPrDto(pr);
     }
 
@@ -165,14 +170,18 @@ public partial class GitHubService : IGitHubService
     {
         await ValidateTaskAccessAsync(taskId, currentUserId, isAdmin, ct);
 
-        var pr = await _db.TaskPullRequests.FirstOrDefaultAsync(p => p.Id == prId && p.TaskId == taskId, ct)
+        var pr = await _db.TaskPullRequests
+            .Include(p => p.LinkedByUser)
+            .FirstOrDefaultAsync(p => p.Id == prId && p.TaskId == taskId, ct)
             ?? throw new KeyNotFoundException($"Pull Request link #{prId} not found.");
 
-        var (title, state, isDraft, error) = await FetchPrFromGitHubAsync(pr.RepositoryOwner, pr.RepositoryName, pr.PullRequestNumber, ct);
+        var (title, state, isDraft, author, authorAvatar, error) = await FetchPrFromGitHubAsync(pr.RepositoryOwner, pr.RepositoryName, pr.PullRequestNumber, ct);
 
         pr.Title = title ?? pr.Title;
         pr.GitHubState = state;
         pr.IsDraft = isDraft;
+        if (!string.IsNullOrEmpty(author)) pr.AuthorGitHubUsername = author;
+        if (!string.IsNullOrEmpty(authorAvatar)) pr.AuthorAvatarUrl = authorAvatar;
         pr.LastSyncedAtUtc = DateTime.UtcNow;
         pr.SyncError = error;
 
@@ -203,7 +212,112 @@ public partial class GitHubService : IGitHubService
         await _db.SaveChangesAsync(ct);
     }
 
-    private async Task<(string? Title, GitHubPullRequestState State, bool IsDraft, string? Error)> FetchPrFromGitHubAsync(
+    public async Task<IReadOnlyList<ProjectPullRequestDto>> GetProjectPullRequestsAsync(
+        int projectId, int currentUserId, bool isAdmin, CancellationToken ct)
+    {
+        var project = await _db.Projects
+            .AsNoTracking()
+            .Include(p => p.Members)
+            .FirstOrDefaultAsync(p => p.Id == projectId, ct)
+            ?? throw new KeyNotFoundException($"Project #{projectId} not found.");
+
+        if (!isAdmin && project.OwnerUserId != currentUserId && !project.Members.Any(m => m.UserId == currentUserId))
+        {
+            throw new UnauthorizedAccessException("You do not have access to this project.");
+        }
+
+        return await _db.TaskPullRequests
+            .AsNoTracking()
+            .Include(p => p.Task)
+                .ThenInclude(t => t.Project)
+            .Include(p => p.LinkedByUser)
+            .Where(p => p.Task.ProjectId == projectId)
+            .OrderByDescending(p => p.CreatedAtUtc)
+            .Select(p => new ProjectPullRequestDto(
+                p.Id,
+                p.TaskId,
+                p.Task.Project.Key + "-" + p.Task.Id,
+                p.Task.Title,
+                p.RepositoryOwner,
+                p.RepositoryName,
+                p.PullRequestNumber,
+                p.HtmlUrl,
+                p.Title,
+                p.GitHubState.ToString(),
+                p.IsDraft,
+                p.ReviewStatus != null ? p.ReviewStatus.ToString() : null,
+                p.AuthorGitHubUsername,
+                p.AuthorAvatarUrl,
+                p.LinkedByUserId,
+                p.LinkedByUser != null ? p.LinkedByUser.FullName : null,
+                p.LastSyncedAtUtc,
+                p.SyncError,
+                p.CreatedAtUtc
+            ))
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<ProjectPullRequestDto>> SyncProjectPullRequestsAsync(
+        int projectId, int currentUserId, bool isAdmin, CancellationToken ct)
+    {
+        var project = await _db.Projects
+            .Include(p => p.Members)
+            .FirstOrDefaultAsync(p => p.Id == projectId, ct)
+            ?? throw new KeyNotFoundException($"Project #{projectId} not found.");
+
+        if (!isAdmin && project.OwnerUserId != currentUserId && !project.Members.Any(m => m.UserId == currentUserId))
+        {
+            throw new UnauthorizedAccessException("You do not have access to this project.");
+        }
+
+        var prs = await _db.TaskPullRequests
+            .Include(p => p.Task)
+                .ThenInclude(t => t.Project)
+            .Include(p => p.LinkedByUser)
+            .Where(p => p.Task.ProjectId == projectId)
+            .ToListAsync(ct);
+
+        foreach (var pr in prs)
+        {
+            var (title, state, isDraft, author, authorAvatar, error) = await FetchPrFromGitHubAsync(pr.RepositoryOwner, pr.RepositoryName, pr.PullRequestNumber, ct);
+            pr.Title = title ?? pr.Title;
+            pr.GitHubState = state;
+            pr.IsDraft = isDraft;
+            if (!string.IsNullOrEmpty(author)) pr.AuthorGitHubUsername = author;
+            if (!string.IsNullOrEmpty(authorAvatar)) pr.AuthorAvatarUrl = authorAvatar;
+            pr.LastSyncedAtUtc = DateTime.UtcNow;
+            pr.SyncError = error;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return prs
+            .OrderByDescending(p => p.CreatedAtUtc)
+            .Select(p => new ProjectPullRequestDto(
+                p.Id,
+                p.TaskId,
+                p.Task.Project.Key + "-" + p.Task.Id,
+                p.Task.Title,
+                p.RepositoryOwner,
+                p.RepositoryName,
+                p.PullRequestNumber,
+                p.HtmlUrl,
+                p.Title,
+                p.GitHubState.ToString(),
+                p.IsDraft,
+                p.ReviewStatus != null ? p.ReviewStatus.ToString() : null,
+                p.AuthorGitHubUsername,
+                p.AuthorAvatarUrl,
+                p.LinkedByUserId,
+                p.LinkedByUser != null ? p.LinkedByUser.FullName : null,
+                p.LastSyncedAtUtc,
+                p.SyncError,
+                p.CreatedAtUtc
+            ))
+            .ToList();
+    }
+
+    private async Task<(string? Title, GitHubPullRequestState State, bool IsDraft, string? Author, string? AuthorAvatar, string? Error)> FetchPrFromGitHubAsync(
         string owner, string repo, int number, CancellationToken ct)
     {
         var client = _httpClientFactory.CreateClient("GitHub");
@@ -212,11 +326,11 @@ public partial class GitHubService : IGitHubService
             var response = await client.GetAsync($"repos/{owner}/{repo}/pulls/{number}", ct);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                return (null, GitHubPullRequestState.Open, false, "PR not found on GitHub.");
+                return (null, GitHubPullRequestState.Open, false, null, null, "PR not found on GitHub.");
             }
             if (response.StatusCode == HttpStatusCode.Forbidden || response.StatusCode == (HttpStatusCode)429)
             {
-                return (null, GitHubPullRequestState.Open, false, "GitHub API rate limit exceeded. Try again later.");
+                return (null, GitHubPullRequestState.Open, false, null, null, "GitHub API rate limit exceeded. Try again later.");
             }
             response.EnsureSuccessStatusCode();
 
@@ -229,16 +343,24 @@ public partial class GitHubService : IGitHubService
             var merged = root.TryGetProperty("merged_at", out var mergedProp) && mergedProp.ValueKind != JsonValueKind.Null;
             var stateStr = root.TryGetProperty("state", out var stateProp) ? stateProp.GetString() : "open";
 
+            string? author = null;
+            string? authorAvatar = null;
+            if (root.TryGetProperty("user", out var userProp))
+            {
+                if (userProp.TryGetProperty("login", out var loginProp)) author = loginProp.GetString();
+                if (userProp.TryGetProperty("avatar_url", out var avProp)) authorAvatar = avProp.GetString();
+            }
+
             var state = merged ? GitHubPullRequestState.Merged
                       : stateStr == "closed" ? GitHubPullRequestState.Closed
                       : GitHubPullRequestState.Open;
 
-            return (title, state, isDraft, null);
+            return (title, state, isDraft, author, authorAvatar, null);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to sync GitHub PR {Owner}/{Repo}#{Number}", owner, repo, number);
-            return (null, GitHubPullRequestState.Open, false, "Network error communicating with GitHub.");
+            return (null, GitHubPullRequestState.Open, false, null, null, "Network error communicating with GitHub.");
         }
     }
 
@@ -274,6 +396,10 @@ public partial class GitHubService : IGitHubService
             pr.GitHubState.ToString(),
             pr.IsDraft,
             pr.ReviewStatus?.ToString(),
+            pr.AuthorGitHubUsername,
+            pr.AuthorAvatarUrl,
+            pr.LinkedByUserId,
+            pr.LinkedByUser != null ? pr.LinkedByUser.FullName : null,
             pr.LastSyncedAtUtc,
             pr.SyncError
         );

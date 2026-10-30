@@ -12,4 +12,7 @@ public interface IGitHubService
     Task<PullRequestDto> LinkPullRequestAsync(int taskId, string prUrl, int currentUserId, bool isAdmin, CancellationToken ct);
     Task<PullRequestDto> SyncPullRequestAsync(int taskId, int prId, int currentUserId, bool isAdmin, CancellationToken ct);
     Task UnlinkPullRequestAsync(int taskId, int prId, int currentUserId, bool isAdmin, CancellationToken ct);
+
+    Task<IReadOnlyList<ProjectPullRequestDto>> GetProjectPullRequestsAsync(int projectId, int currentUserId, bool isAdmin, CancellationToken ct);
+    Task<IReadOnlyList<ProjectPullRequestDto>> SyncProjectPullRequestsAsync(int projectId, int currentUserId, bool isAdmin, CancellationToken ct);
 }

@@ -20,7 +20,6 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         ApplyConfigurations(modelBuilder);
-        
     }
 
     private static void ApplyConfigurations(ModelBuilder b)
@@ -47,6 +46,7 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.Key).IsUnique();
             e.Property(x => x.Name).HasMaxLength(150).IsRequired();
             e.Property(x => x.Description).HasMaxLength(2000);
+            e.Property(x => x.GitHubRepoUrl).HasMaxLength(500);
             e.Property(x => x.Status).HasMaxLength(20).HasConversion<string>().IsRequired();
             e.Property(x => x.UpdatedAtUtc).IsRequired();
             e.HasOne(x => x.Owner)
@@ -127,6 +127,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.Title).HasMaxLength(300);
             e.Property(x => x.GitHubState).HasMaxLength(20).HasConversion<string>().IsRequired();
             e.Property(x => x.ReviewStatus).HasMaxLength(30).HasConversion<string>();
+            e.Property(x => x.AuthorGitHubUsername).HasMaxLength(100);
+            e.Property(x => x.AuthorAvatarUrl).HasMaxLength(500);
             e.Property(x => x.SyncError).HasMaxLength(500);
             e.HasIndex(x => new { x.RepositoryOwner, x.RepositoryName, x.PullRequestNumber }).IsUnique();
             e.HasIndex(x => x.TaskId);
@@ -134,6 +136,10 @@ public class AppDbContext : DbContext
              .WithMany(t => t.PullRequests)
              .HasForeignKey(x => x.TaskId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.LinkedByUser)
+             .WithMany()
+             .HasForeignKey(x => x.LinkedByUserId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         // ---------- TaskActivityLogs ----------
@@ -182,5 +188,4 @@ public class AppDbContext : DbContext
              .OnDelete(DeleteBehavior.Restrict);
         });
     }
-
 }

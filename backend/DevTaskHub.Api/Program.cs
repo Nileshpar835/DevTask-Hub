@@ -88,10 +88,10 @@ builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IProjectService, ProjectService>(); // <-- Add this
-builder.Services.AddScoped<ITaskService, TaskService>(); // <-- Add this
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.AddScoped<IGitHubService, GitHubService>(); // <-- Add this
+builder.Services.AddScoped<IGitHubService, GitHubService>();
 
 var app = builder.Build();
 
@@ -109,6 +109,8 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
     await DbSeeder.SeedAdminAsync(scope.ServiceProvider);
 }
 

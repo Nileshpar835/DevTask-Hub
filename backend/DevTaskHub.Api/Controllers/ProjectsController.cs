@@ -13,10 +13,12 @@ namespace DevTaskHub.Api.Controllers;
 public class ProjectsController : ControllerBase
 {
     private readonly IProjectService _projects;
+    private readonly IGitHubService _github;
 
-    public ProjectsController(IProjectService projects)
+    public ProjectsController(IProjectService projects, IGitHubService github)
     {
         _projects = projects;
+        _github = github;
     }
 
     [HttpGet]
@@ -84,6 +86,22 @@ public class ProjectsController : ControllerBase
         var (userId, isAdmin) = GetCurrentUserInfo();
         await _projects.RemoveMemberAsync(id, memberUserId, userId, isAdmin, ct);
         return NoContent();
+    }
+
+    [HttpGet("{id:int}/pull-requests")]
+    public async Task<ActionResult<IReadOnlyList<ProjectPullRequestDto>>> GetPullRequests(int id, CancellationToken ct)
+    {
+        var (userId, isAdmin) = GetCurrentUserInfo();
+        var prs = await _github.GetProjectPullRequestsAsync(id, userId, isAdmin, ct);
+        return Ok(prs);
+    }
+
+    [HttpPost("{id:int}/pull-requests/sync")]
+    public async Task<ActionResult<IReadOnlyList<ProjectPullRequestDto>>> SyncPullRequests(int id, CancellationToken ct)
+    {
+        var (userId, isAdmin) = GetCurrentUserInfo();
+        var prs = await _github.SyncProjectPullRequestsAsync(id, userId, isAdmin, ct);
+        return Ok(prs);
     }
 
     private (int UserId, bool IsAdmin) GetCurrentUserInfo()

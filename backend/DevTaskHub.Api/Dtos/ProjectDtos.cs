@@ -5,10 +5,12 @@ namespace DevTaskHub.Api.Dtos;
 public record CreateProjectRequest(
     [Required, RegularExpression(@"^[A-Z0-9]{2,10}$", ErrorMessage = "Key must be 2-10 uppercase alphanumeric characters (e.g. 'DEV', 'TASK').")]
     string Key,
-    [Required,MaxLength(150)]
+    [Required, MaxLength(150)]
     string Name,
     [MaxLength(2000)]
-    string? Description
+    string? Description,
+    [MaxLength(500)]
+    string? GitHubRepoUrl = null
 );
 
 public record UpdateProjectRequest(
@@ -17,7 +19,9 @@ public record UpdateProjectRequest(
     [MaxLength(2000)]
     string? Description,
     [Required]
-    ProjectStatus Status
+    ProjectStatus Status,
+    [MaxLength(500)]
+    string? GitHubRepoUrl = null
 );
 
 public record ProjectSummaryDto(
@@ -25,6 +29,7 @@ public record ProjectSummaryDto(
     string Key,
     string Name,
     string? Description,
+    string? GitHubRepoUrl,
     string Status,
     int OwnerUserId,
     string OwnerName,
@@ -48,6 +53,7 @@ public record ProjectDetailDto(
     string Key,
     string Name,
     string? Description,
+    string? GitHubRepoUrl,
     string Status,
     int OwnerUserId,
     string OwnerName,
@@ -55,9 +61,11 @@ public record ProjectDetailDto(
     DateTime UpdatedAtUtc,
     IReadOnlyList<ProjectMemberDto> Members
 );
+
 public record AddProjectMemberRequest(
     [Required] int UserId
 );
+
 public class ProjectQueryParameters
 {
     private const int MaxPageSize = 100;

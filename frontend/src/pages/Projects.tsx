@@ -12,7 +12,6 @@ import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
 import { Pagination } from "../components/ui/Pagination";
 
-
 export default function Projects() {
     const [data, setData] = useState<PagedResult<ProjectSummary> | null>(null);
     const [loading, setLoading] = useState(true);
@@ -29,9 +28,9 @@ export default function Projects() {
     const [newKey, setNewKey] = useState("");
     const [newName, setNewName] = useState("");
     const [newDescription, setNewDescription] = useState("");
+    const [newGitHubRepoUrl, setNewGitHubRepoUrl] = useState("");
     const [formError, setFormError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
-
 
     const loadProjects = useCallback(async () => {
         setLoading(true);
@@ -49,9 +48,8 @@ export default function Projects() {
             if (isAxiosError(err)) {
                 setError(err.response?.data?.error ?? "Failed to load Projects");
             } else {
-                setError("An unexpected error occured while loading projects");
+                setError("An unexpected error occurred while loading projects");
             }
-
         } finally {
             setLoading(false);
         }
@@ -79,31 +77,30 @@ export default function Projects() {
                 key: newKey.trim().toUpperCase(),
                 name: newName.trim(),
                 description: newDescription.trim() || undefined,
+                gitHubRepoUrl: newGitHubRepoUrl.trim() || undefined,
             });
             setIsModalOpen(false);
             setNewKey("");
             setNewName("");
             setNewDescription("");
+            setNewGitHubRepoUrl("");
             loadProjects();
-
         } catch (err) {
             if (isAxiosError(err)) {
-                setFormError(err.response?.data?.error ?? "failed to create project.");
+                setFormError(err.response?.data?.error ?? "Failed to create project.");
             } else {
-                setFormError("An unexpected error occured");
+                setFormError("An unexpected error occurred");
             }
         } finally {
             setSubmitting(false);
         }
     }
+
     function getStatusBadge(status: ProjectStatus) {
         switch (status) {
             case "Active": return <Badge variant="success">Active</Badge>;
-
             case "OnHold": return <Badge variant="warning">On Hold</Badge>;
-
             case "Archived": return <Badge variant="neutral">Archived</Badge>;
-
             default: return <Badge>{status}</Badge>;
         }
     }
@@ -113,17 +110,18 @@ export default function Projects() {
             <div className="page-header">
                 <div>
                     <h2>Projects</h2>
-                    <p className="page-subtitle">Track and Organize software repositories and task.</p>
+                    <p className="page-subtitle">Track and organize software repositories and tasks.</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
                     + New Project
                 </button>
             </div>
+
             {/* Filter and Search Bar */}
             <div className="filter-bar">
                 <input
                     type="search"
-                    placeholder="Search by key or name.."
+                    placeholder="Search by key or name…"
                     className="search-input"
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
@@ -147,6 +145,7 @@ export default function Projects() {
                     </select>
                 </div>
             </div>
+
             {/* Content States */}
             {loading ? (
                 <p className="page-state">Loading projects…</p>
@@ -162,16 +161,30 @@ export default function Projects() {
                     <div className="project-grid">
                         {data.items.map((project) => (
                             <div key={project.id} className="project-card">
-                                <div className="project-card-header">
-                                    <span className="project-key">{project.key}</span>
-                                    {getStatusBadge(project.status)}
+                                <div>
+                                    <div className="project-card-header">
+                                        <span className="project-key">{project.key}</span>
+                                        {getStatusBadge(project.status)}
+                                    </div>
+                                    <h3 className="project-title">
+                                        <Link to={`/projects/${project.id}`}>{project.name}</Link>
+                                    </h3>
+                                    <p className="project-description">
+                                        {project.description || "No description provided."}
+                                    </p>
+                                    {project.gitHubRepoUrl && (
+                                        <div style={{ marginBottom: "12px", fontSize: "12px" }}>
+                                            <a 
+                                                href={project.gitHubRepoUrl} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                                            >
+                                                <span>🐙</span> {project.gitHubRepoUrl.replace(/^https?:\/\/github\.com\//, "")}
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
-                                <h3 className="project-title">
-                                    <Link to={`/projects/${project.id}`}>{project.name}</Link>
-                                </h3>
-                                <p className="project-description">
-                                    {project.description || "No description provided."}
-                                </p>
                                 <div className="project-meta">
                                     <span>👤 {project.ownerName}</span>
                                     <span>👥 {project.memberCount} members</span>
@@ -187,6 +200,7 @@ export default function Projects() {
                     />
                 </>
             )}
+
             {/* Create Project Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create New Project">
                 {formError && <div className="form-error">{formError}</div>}
@@ -214,6 +228,20 @@ export default function Projects() {
                         />
                     </div>
                     <div className="field">
+                        <label htmlFor="project-github">GitHub Repository Link (optional)</label>
+                        <input
+                            id="project-github"
+                            type="url"
+                            placeholder="e.g. https://github.com/owner/repository"
+                            maxLength={500}
+                            value={newGitHubRepoUrl}
+                            onChange={(e) => setNewGitHubRepoUrl(e.target.value)}
+                        />
+                        <span style={{ display: "block", marginTop: "4px", fontSize: "12px", color: "var(--muted)" }}>
+                            Link your repository to track and sync pull requests across project tasks.
+                        </span>
+                    </div>
+                    <div className="field">
                         <label htmlFor="project-desc">Description (optional)</label>
                         <textarea
                             id="project-desc"
@@ -235,9 +263,6 @@ export default function Projects() {
                     </div>
                 </form>
             </Modal>
-
         </div>
     );
-
-
 }

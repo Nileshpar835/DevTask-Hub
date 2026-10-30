@@ -18,9 +18,13 @@ export interface PullRequest {
   pullRequestNumber: number;
   htmlUrl: string;
   title: string | null;
-  state: "Open" | "Closed" | "Merged";
+  state: "Open" | "Closed" | "Merged" | string;
   isDraft: boolean;
   reviewStatus: string | null;
+  authorGitHubUsername?: string | null;
+  authorAvatarUrl?: string | null;
+  linkedByUserId?: number | null;
+  linkedByUserName?: string | null;
   lastSyncedAtUtc: string | null;
   syncError: string | null;
 }

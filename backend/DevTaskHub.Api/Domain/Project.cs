@@ -8,6 +8,7 @@ public class Project
     public string Key { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? GitHubRepoUrl { get; set; }
     public ProjectStatus Status { get; set; } = ProjectStatus.Active;
     public int OwnerUserId { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

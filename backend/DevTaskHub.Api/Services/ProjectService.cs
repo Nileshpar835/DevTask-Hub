@@ -54,6 +54,7 @@ public class ProjectService : IProjectService
                 p.Key,
                 p.Name,
                 p.Description,
+                p.GitHubRepoUrl,
                 p.Status.ToString(),
                 p.OwnerUserId,
                 p.Owner.FullName,
@@ -104,6 +105,7 @@ public class ProjectService : IProjectService
             project.Key,
             project.Name,
             project.Description,
+            project.GitHubRepoUrl,
             project.Status.ToString(),
             project.OwnerUserId,
             project.Owner.FullName,
@@ -130,6 +132,7 @@ public class ProjectService : IProjectService
             Key = upperKey,
             Name = request.Name.Trim(),
             Description = request.Description?.Trim(),
+            GitHubRepoUrl = !string.IsNullOrWhiteSpace(request.GitHubRepoUrl) ? request.GitHubRepoUrl.Trim() : null,
             Status = ProjectStatus.Active,
             OwnerUserId = currentUserId,
             CreatedAtUtc = DateTime.UtcNow,
@@ -151,6 +154,7 @@ public class ProjectService : IProjectService
             project.Key,
             project.Name,
             project.Description,
+            project.GitHubRepoUrl,
             project.Status.ToString(),
             project.OwnerUserId,
             user.FullName,
@@ -178,6 +182,7 @@ public class ProjectService : IProjectService
 
         project.Name = request.Name.Trim();
         project.Description = request.Description?.Trim();
+        project.GitHubRepoUrl = !string.IsNullOrWhiteSpace(request.GitHubRepoUrl) ? request.GitHubRepoUrl.Trim() : null;
         project.Status = request.Status;
         project.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -188,6 +193,7 @@ public class ProjectService : IProjectService
             project.Key,
             project.Name,
             project.Description,
+            project.GitHubRepoUrl,
             project.Status.ToString(),
             project.OwnerUserId,
             project.Owner.FullName,

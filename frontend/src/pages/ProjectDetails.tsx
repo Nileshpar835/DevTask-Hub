@@ -10,9 +10,12 @@ import {
     deleteProject,
     addProjectMember,
     removeProjectMember,
+    fetchProjectPullRequests,
+    syncProjectPullRequests,
     type ProjectDetail,
     type ProjectMember,
-    type ProjectStatus
+    type ProjectStatus,
+    type ProjectPullRequest
 } from "../api/projects";
 
 import { fetchUsers, type UserSummary } from "../api/users";
@@ -28,25 +31,37 @@ export default function ProjectDetails() {
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [pageError, setPageError] = useState<string | null>(null);
+
+    // Pull Requests State
+    const [pullRequests, setPullRequests] = useState<ProjectPullRequest[]>([]);
+    const [loadingPrs, setLoadingPrs] = useState(false);
+    const [syncingPrs, setSyncingPrs] = useState(false);
+    const [prSyncMessage, setPrSyncMessage] = useState<string | null>(null);
+
     // Available users for Add Member dropdown (if Admin)
     const [availableUsers, setAvailableUsers] = useState<UserSummary[]>([]);
+
     // Edit Modal State
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editName, setEditName] = useState("");
     const [editDesc, setEditDesc] = useState("");
+    const [editGitHubRepoUrl, setEditGitHubRepoUrl] = useState("");
     const [editStatus, setEditStatus] = useState<ProjectStatus>("Active");
     const [editError, setEditError] = useState<string | null>(null);
     const [savingEdit, setSavingEdit] = useState(false);
+
     // Add Member Modal State
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<number | "">("");
     const [manualUserId, setManualUserId] = useState("");
     const [memberError, setMemberError] = useState<string | null>(null);
     const [addingMember, setAddingMember] = useState(false);
+
     // Delete Confirm Modal State
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+
     // Remove Member Modal State
     const [memberToRemove, setMemberToRemove] = useState<ProjectMember | null>(null);
     const [removeMemberError, setRemoveMemberError] = useState<string | null>(null);
@@ -65,7 +80,15 @@ export default function ProjectDetails() {
             setProject(data);
             setEditName(data.name);
             setEditDesc(data.description || "");
+            setEditGitHubRepoUrl(data.gitHubRepoUrl || "");
             setEditStatus(data.status);
+
+            // Fetch Pull Requests linked across project tasks
+            setLoadingPrs(true);
+            fetchProjectPullRequests(projectId)
+                .then(setPullRequests)
+                .catch(() => setPullRequests([]))
+                .finally(() => setLoadingPrs(false));
         } catch (err) {
             if (isAxiosError(err)) {
                 setPageError(err.response?.data?.error ?? "Failed to load Project details.");
@@ -77,10 +100,10 @@ export default function ProjectDetails() {
         }
     }, [projectId]);
 
-    useEffect(()=>{
+    useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         loadProjects();
-    },[loadProjects]);
+    }, [loadProjects]);
 
     useEffect(() => {
         if (user?.role === "Admin") {
@@ -90,13 +113,12 @@ export default function ProjectDetails() {
         }
     }, [user]);
 
-
     const isOwnerOrAdmin = user?.role === "Admin" || (project && user?.id === project.ownerUserId);
 
     async function handleSaveEdit(e: FormEvent) {
         e.preventDefault();
         if (!editName.trim()) {
-            setEditError("Project name is Required.");
+            setEditError("Project name is required.");
             return;
         }
         setSavingEdit(true);
@@ -105,21 +127,22 @@ export default function ProjectDetails() {
             await updateProject(projectId, {
                 name: editName.trim(),
                 description: editDesc.trim() || undefined,
+                gitHubRepoUrl: editGitHubRepoUrl.trim() || undefined,
                 status: editStatus,
             });
             setIsEditOpen(false);
             loadProjects();
-
         } catch (err) {
             if (isAxiosError(err)) {
-                setEditError(err.response?.data?.error ?? "failed to update project.");
+                setEditError(err.response?.data?.error ?? "Failed to update project.");
             } else {
-                setEditError("an unexpected error occured.");
+                setEditError("An unexpected error occurred.");
             }
         } finally {
             setSavingEdit(false);
         }
     }
+
     async function handleAddMember(e: FormEvent) {
         e.preventDefault();
         const targetUserId = selectedUserId !== "" ? Number(selectedUserId) : Number(manualUserId);
@@ -145,6 +168,7 @@ export default function ProjectDetails() {
             setAddingMember(false);
         }
     }
+
     async function handleConfirmRemoveMember() {
         if (!memberToRemove) return;
         setIsRemovingMember(true);
@@ -163,6 +187,7 @@ export default function ProjectDetails() {
             setIsRemovingMember(false);
         }
     }
+
     async function handleDeleteProject() {
         setDeleting(true);
         setDeleteError(null);
@@ -179,6 +204,26 @@ export default function ProjectDetails() {
             setDeleting(false);
         }
     }
+
+    async function handleSyncAllPrs() {
+        setSyncingPrs(true);
+        setPrSyncMessage(null);
+        try {
+            const updated = await syncProjectPullRequests(projectId);
+            setPullRequests(updated);
+            setPrSyncMessage(`Successfully refreshed ${updated.length} pull request(s) from GitHub.`);
+            setTimeout(() => setPrSyncMessage(null), 4000);
+        } catch (err) {
+            if (isAxiosError(err)) {
+                setPrSyncMessage(err.response?.data?.error ?? "Failed to sync pull requests with GitHub.");
+            } else {
+                setPrSyncMessage("An unexpected error occurred during sync.");
+            }
+        } finally {
+            setSyncingPrs(false);
+        }
+    }
+
     function getStatusBadge(status: ProjectStatus) {
         switch (status) {
             case "Active": return <Badge variant="success">Active</Badge>;
@@ -187,6 +232,22 @@ export default function ProjectDetails() {
             default: return <Badge>{status}</Badge>;
         }
     }
+
+    function getPrStateBadge(state: string, isDraft: boolean) {
+        if (isDraft) {
+            return <span className="badge badge-neutral">Draft</span>;
+        }
+        switch (state.toLowerCase()) {
+            case "merged":
+                return <span className="badge badge-purple">Merged</span>;
+            case "closed":
+                return <span className="badge badge-danger">Closed</span>;
+            case "open":
+            default:
+                return <span className="badge badge-success">Open</span>;
+        }
+    }
+
     if (loading) return <p className="page-state">Loading project details…</p>;
     if (pageError || !project) {
         return (
@@ -196,16 +257,17 @@ export default function ProjectDetails() {
             </div>
         );
     }
+
     // Filter out users who are already members
     const nonMemberUsers = availableUsers.filter(
         (u) => !project.members.some((m) => m.userId === u.id)
     );
 
     return (
-        <div className="project-container">
+        <div className="projects-container">
             <div className="page-header">
                 <div>
-                    <Link to="/projects" className="back-link"> ⬅️ All Projects</Link>
+                    <Link to="/projects" className="back-link">← All Projects</Link>
                     <div className="project-header-title">
                         <span className="project-key">{project.key}</span>
                         <h2>{project.name}</h2>
@@ -214,7 +276,7 @@ export default function ProjectDetails() {
                 </div>
 
                 {isOwnerOrAdmin && (
-                    <div className="header-action">
+                    <div className="header-actions">
                         <button className="btn" onClick={() => setIsEditOpen(true)}>
                             Edit Project
                         </button>
@@ -224,6 +286,7 @@ export default function ProjectDetails() {
                     </div>
                 )}
             </div>
+
             {/* Overview Card */}
             <div className="detail-card">
                 <h3>Overview</h3>
@@ -234,6 +297,25 @@ export default function ProjectDetails() {
                         <p className="detail-value">👤 {project.ownerName}</p>
                     </div>
                     <div>
+                        <span className="detail-label">GitHub Repository</span>
+                        <p className="detail-value">
+                            {project.gitHubRepoUrl ? (
+                                <a 
+                                    href={project.gitHubRepoUrl} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                                >
+                                    <span>🐙</span> {project.gitHubRepoUrl.replace(/^https?:\/\/github\.com\//, "")} ↗
+                                </a>
+                            ) : (
+                                <span style={{ color: "var(--muted)", fontStyle: "italic", fontSize: "13px" }}>
+                                    Not linked {isOwnerOrAdmin && <span style={{ cursor: "pointer", textDecoration: "underline", color: "var(--color-royal-violet)" }} onClick={() => setIsEditOpen(true)}>(Click to connect)</span>}
+                                </span>
+                            )}
+                        </p>
+                    </div>
+                    <div>
                         <span className="detail-label">Created Date</span>
                         <p className="detail-value">{new Date(project.createdAtUtc).toLocaleDateString()}</p>
                     </div>
@@ -242,6 +324,133 @@ export default function ProjectDetails() {
                         <p className="detail-value">{new Date(project.updatedAtUtc).toLocaleDateString()}</p>
                     </div>
                 </div>
+            </div>
+
+            {/* Project Pull Requests Section */}
+            <div className="detail-card" style={{ marginTop: "24px" }}>
+                <div className="card-header-flex">
+                    <div>
+                        <h3>Pull Requests ({pullRequests.length})</h3>
+                        <p className="page-subtitle">
+                            All pull requests linked to tasks in this project, showing who created each PR and live status.
+                        </p>
+                    </div>
+                    <button 
+                        className="btn" 
+                        onClick={handleSyncAllPrs}
+                        disabled={syncingPrs}
+                        style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    >
+                        <span>🔄</span> {syncingPrs ? "Syncing PRs…" : "Sync All PRs"}
+                    </button>
+                </div>
+
+                {prSyncMessage && (
+                    <div className="form-success" style={{ marginBottom: "16px" }}>
+                        {prSyncMessage}
+                    </div>
+                )}
+
+                {loadingPrs ? (
+                    <p className="page-state">Loading pull requests…</p>
+                ) : pullRequests.length === 0 ? (
+                    <div className="empty-state" style={{ padding: "36px 16px" }}>
+                        <div style={{ fontSize: "28px", marginBottom: "8px" }}>🔀</div>
+                        <h4>No Pull Requests Linked Yet</h4>
+                        <p style={{ margin: "4px 0 0", fontSize: "13px" }}>
+                            When team members link GitHub PRs inside individual task details, they will automatically appear here with author details and status updates.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="table-responsive">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pull Request</th>
+                                    <th>Whose PR (Author)</th>
+                                    <th>Status</th>
+                                    <th>Task</th>
+                                    <th>Last Synced</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pullRequests.map((pr) => (
+                                    <tr key={pr.id}>
+                                        <td>
+                                            <a 
+                                                href={pr.htmlUrl} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "6px" }}
+                                            >
+                                                <span>#{pr.pullRequestNumber}</span>
+                                                <span>{pr.title || `${pr.repositoryOwner}/${pr.repositoryName}#${pr.pullRequestNumber}`}</span>
+                                                <span style={{ fontSize: "11px", color: "var(--muted)" }}>↗</span>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                {pr.authorAvatarUrl ? (
+                                                    <img 
+                                                        src={pr.authorAvatarUrl} 
+                                                        alt={pr.authorGitHubUsername || "Author"} 
+                                                        style={{ width: "24px", height: "24px", borderRadius: "50%", border: "1px solid var(--border)" }}
+                                                    />
+                                                ) : (
+                                                    <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "var(--bg)", display: "inline-grid", placeItems: "center", fontSize: "11px", border: "1px solid var(--border)" }}>
+                                                        👤
+                                                    </span>
+                                                )}
+                                                <div>
+                                                    <div style={{ fontWeight: 500, fontSize: "13px" }}>
+                                                        {pr.authorGitHubUsername ? (
+                                                            <a 
+                                                                href={`https://github.com/${pr.authorGitHubUsername}`} 
+                                                                target="_blank" 
+                                                                rel="noreferrer"
+                                                            >
+                                                                @{pr.authorGitHubUsername}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-muted">Unknown GitHub user</span>
+                                                        )}
+                                                    </div>
+                                                    {pr.linkedByUserName && (
+                                                        <div style={{ fontSize: "11px", color: "var(--muted)" }}>
+                                                            Linked by {pr.linkedByUserName}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {getPrStateBadge(pr.state, pr.isDraft)}
+                                            {pr.syncError && (
+                                                <span title={pr.syncError} style={{ marginLeft: "6px", cursor: "help", color: "var(--danger)" }}>
+                                                    ⚠️
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <Link 
+                                                to={`/tasks/${pr.taskId}`} 
+                                                style={{ fontSize: "13px", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                                            >
+                                                <span className="project-key" style={{ fontSize: "10px", padding: "1px 5px" }}>
+                                                    {pr.taskKey}
+                                                </span>
+                                                <span>{pr.taskTitle}</span>
+                                            </Link>
+                                        </td>
+                                        <td style={{ fontSize: "12px", color: "var(--muted)" }}>
+                                            {pr.lastSyncedAtUtc ? new Date(pr.lastSyncedAtUtc).toLocaleString() : "Never"}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* Team Members Section */}
@@ -307,6 +516,7 @@ export default function ProjectDetails() {
                     </table>
                 </div>
             </div>
+
             {/* Edit Project Modal */}
             <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Project Details">
                 {editError && <div className="form-error">{editError}</div>}
@@ -319,6 +529,17 @@ export default function ProjectDetails() {
                             maxLength={150}
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
+                        />
+                    </div>
+                    <div className="field">
+                        <label htmlFor="edit-github">GitHub Repository Link (optional)</label>
+                        <input
+                            id="edit-github"
+                            type="url"
+                            placeholder="e.g. https://github.com/owner/repository"
+                            maxLength={500}
+                            value={editGitHubRepoUrl}
+                            onChange={(e) => setEditGitHubRepoUrl(e.target.value)}
                         />
                     </div>
                     <div className="field">
@@ -356,7 +577,6 @@ export default function ProjectDetails() {
                     </div>
                 </form>
             </Modal>
-
 
             {/* Add Member Modal */}
             <Modal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} title="Add Team Member">
