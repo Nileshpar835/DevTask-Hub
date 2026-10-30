@@ -9,6 +9,7 @@ import {
   type DeveloperDashboardData
 } from "../api/dashboard";
 import { Badge } from "../components/ui/Badge";
+import { formatTime, formatRelativeTime } from "../utils/date";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -149,7 +150,10 @@ function AdminDashboardView(
                     <div className="timeline-header">
                       <strong>{act.userFullName}</strong>
                       <span className="timeline-action">{act.action}</span>
-                      <span className="timeline-date">{new Date(act.timestampUtc).toLocaleTimeString()}</span>
+                      <span className="timeline-date">
+                        {formatTime(act.timestampUtc)}
+                        {formatRelativeTime(act.timestampUtc) ? ` (${formatRelativeTime(act.timestampUtc)})` : ""}
+                      </span>
                     </div>
                     {(act.oldValue || act.newValue) && (
                       <div className="timeline-diff">

@@ -22,6 +22,7 @@ import { fetchUsers, type UserSummary } from "../api/users";
 import { isAxiosError } from "axios";
 import { Modal } from "../components/ui/Modal";
 import { Badge } from "../components/ui/Badge";
+import { formatDate, formatDateTime, formatRelativeTime } from "../utils/date";
 
 export default function ProjectDetails() {
     const { id } = useParams<{ id: string }>();
@@ -317,11 +318,11 @@ export default function ProjectDetails() {
                     </div>
                     <div>
                         <span className="detail-label">Created Date</span>
-                        <p className="detail-value">{new Date(project.createdAtUtc).toLocaleDateString()}</p>
+                        <p className="detail-value">{formatDate(project.createdAtUtc)}</p>
                     </div>
                     <div>
                         <span className="detail-label">Last Updated</span>
-                        <p className="detail-value">{new Date(project.updatedAtUtc).toLocaleDateString()}</p>
+                        <p className="detail-value">{formatDate(project.updatedAtUtc)}</p>
                     </div>
                 </div>
             </div>
@@ -443,7 +444,9 @@ export default function ProjectDetails() {
                                             </Link>
                                         </td>
                                         <td style={{ fontSize: "12px", color: "var(--muted)" }}>
-                                            {pr.lastSyncedAtUtc ? new Date(pr.lastSyncedAtUtc).toLocaleString() : "Never"}
+                                            {pr.lastSyncedAtUtc && formatDateTime(pr.lastSyncedAtUtc)
+                                                ? `${formatDateTime(pr.lastSyncedAtUtc)}${formatRelativeTime(pr.lastSyncedAtUtc) ? ` (${formatRelativeTime(pr.lastSyncedAtUtc)})` : ""}`
+                                                : "Never"}
                                         </td>
                                     </tr>
                                 ))}
@@ -490,7 +493,7 @@ export default function ProjectDetails() {
                                         <td>
                                             <Badge variant="neutral">{member.role}</Badge>
                                         </td>
-                                        <td>{new Date(member.addedAtUtc).toLocaleDateString()}</td>
+                                        <td>{formatDate(member.addedAtUtc)}</td>
                                         {isOwnerOrAdmin && (
                                             <td>
                                                 {!isOwner ? (
