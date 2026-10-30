@@ -16,7 +16,7 @@ export function Pagination({ page, totalpages, onPageChange }: PaginationProps) 
                 Previous
             </button>
             <span className="page-indicator">
-                Page{page} of {totalpages}
+                Page {page} of {totalpages}
             </span>
             <button className="btn"
                 disabled={page >= totalpages}
@@ -24,5 +24,5 @@ export function Pagination({ page, totalpages, onPageChange }: PaginationProps) 
                 Next
             </button>
         </div>
-    )
+    );
 }
