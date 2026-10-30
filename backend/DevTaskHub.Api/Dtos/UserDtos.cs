@@ -7,5 +7,7 @@ public record UserSummaryDto(
     string Email,
     string Fullname,
     string Role,
-    bool IsActive
+    bool IsActive,
+    string? AvatarUrl = null,
+    string? GitHubUsername = null
 );

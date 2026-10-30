@@ -34,6 +34,8 @@ export interface ProjectMember {
     fullName: string;
     role: string;
     addedAtUtc: string;
+    avatarUrl?: string | null;
+    gitHubUsername?: string | null;
 }
 
 export interface ProjectDetail {

@@ -19,6 +19,7 @@ export interface TaskSummary {
     category?: string | null;
     assigneeUserId: number | null;
     assigneeName: string | null;
+    assigneeAvatarUrl?: string | null;
     createdByUserId: number;
     createdByName: string;
     dueDateUtc: string | null;
@@ -39,6 +40,7 @@ export interface TaskDetail {
     category?: string | null;
     assigneeUserId: number | null;
     assigneeName: string | null;
+    assigneeAvatarUrl?: string | null;
     createdByUserId: number;
     createdByName: string;
     dueDateUtc: string | null;

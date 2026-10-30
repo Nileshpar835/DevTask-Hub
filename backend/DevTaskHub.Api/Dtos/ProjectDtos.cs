@@ -45,7 +45,9 @@ public record ProjectMemberDto(
     string Email,
     string FullName,
     string Role,
-    DateTime AddedAtUtc
+    DateTime AddedAtUtc,
+    string? AvatarUrl = null,
+    string? GitHubUsername = null
 );
 
 public record ProjectDetailDto(

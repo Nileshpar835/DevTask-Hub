@@ -46,7 +46,8 @@ public record TaskSummaryDto(
     DateTime? CompletedAtUtc,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
-    string? Category
+    string? Category,
+    string? AssigneeAvatarUrl = null
 );
 
 public record TaskDetailDto(
@@ -66,7 +67,8 @@ public record TaskDetailDto(
     DateTime? CompletedAtUtc,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
-    string? Category
+    string? Category,
+    string? AssigneeAvatarUrl = null
 );
 
 public record TaskActivityLogDto(

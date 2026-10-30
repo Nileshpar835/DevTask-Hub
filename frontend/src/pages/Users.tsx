@@ -290,22 +290,43 @@ export default function Users() {
                     <tr key={u.id}>
                       <td>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div
-                            className="assignee-bubble"
-                            style={{
-                              backgroundColor: getAvatarColor(u.fullname),
-                              width: "30px",
-                              height: "30px",
-                              fontSize: "12px",
-                            }}
-                          >
-                            {getInitials(u.fullname)}
-                          </div>
+                          {u.avatarUrl ? (
+                            <img
+                              src={u.avatarUrl}
+                              alt={u.fullname}
+                              className="assignee-bubble"
+                              style={{
+                                width: "30px",
+                                height: "30px",
+                                objectFit: "cover",
+                                border: "1px solid var(--border)",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              className="assignee-bubble"
+                              style={{
+                                backgroundColor: getAvatarColor(u.fullname),
+                                width: "30px",
+                                height: "30px",
+                                fontSize: "12px",
+                              }}
+                            >
+                              {getInitials(u.fullname)}
+                            </div>
+                          )}
                           <div>
-                            <strong>{u.fullname}</strong>
-                            {isSelf && (
-                              <span className="owner-badge">
-                                You
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <strong>{u.fullname}</strong>
+                              {isSelf && (
+                                <span className="owner-badge">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            {u.gitHubUsername && (
+                              <span style={{ fontSize: "11px", color: "var(--muted)", display: "flex", alignItems: "center", gap: "3px" }}>
+                                <span>🐙</span> @{u.gitHubUsername}
                               </span>
                             )}
                           </div>

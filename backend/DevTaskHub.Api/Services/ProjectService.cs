@@ -83,6 +83,7 @@ public class ProjectService : IProjectService
             .Include(p => p.Owner)
             .Include(p => p.Members)
                 .ThenInclude(m => m.User)
+                    .ThenInclude(u => u.GitHubAccount)
             .FirstOrDefaultAsync(p => p.Id == id, ct)
             ?? throw new KeyNotFoundException($"Project #{id} was not found.");
 
@@ -97,7 +98,9 @@ public class ProjectService : IProjectService
             m.User.Email,
             m.User.FullName,
             m.User.Role.ToString(),
-            m.AddedAtUtc
+            m.AddedAtUtc,
+            m.User.GitHubAccount != null ? m.User.GitHubAccount.AvatarUrl : null,
+            m.User.GitHubAccount != null ? m.User.GitHubAccount.GitHubUsername : null
         )).ToList();
 
         return new ProjectDetailDto(
@@ -231,6 +234,7 @@ public class ProjectService : IProjectService
             .AsNoTracking()
             .Include(p => p.Members)
                 .ThenInclude(m => m.User)
+                    .ThenInclude(u => u.GitHubAccount)
             .FirstOrDefaultAsync(p => p.Id == projectId, ct)
             ?? throw new KeyNotFoundException($"Project #{projectId} was not found.");
 
@@ -245,7 +249,9 @@ public class ProjectService : IProjectService
             m.User.Email,
             m.User.FullName,
             m.User.Role.ToString(),
-            m.AddedAtUtc
+            m.AddedAtUtc,
+            m.User.GitHubAccount != null ? m.User.GitHubAccount.AvatarUrl : null,
+            m.User.GitHubAccount != null ? m.User.GitHubAccount.GitHubUsername : null
         )).ToList();
     }
 
@@ -266,7 +272,9 @@ public class ProjectService : IProjectService
             throw new ArgumentException("User is already a member of this project.");
         }
 
-        var userToAdd = await _db.Users.FindAsync([userIdToAdd], ct)
+        var userToAdd = await _db.Users
+            .Include(u => u.GitHubAccount)
+            .FirstOrDefaultAsync(u => u.Id == userIdToAdd, ct)
             ?? throw new KeyNotFoundException($"User #{userIdToAdd} does not exist.");
 
         var newMember = new ProjectMember
@@ -285,7 +293,9 @@ public class ProjectService : IProjectService
             userToAdd.Email,
             userToAdd.FullName,
             userToAdd.Role.ToString(),
-            newMember.AddedAtUtc
+            newMember.AddedAtUtc,
+            userToAdd.GitHubAccount?.AvatarUrl,
+            userToAdd.GitHubAccount?.GitHubUsername
         );
     }
 

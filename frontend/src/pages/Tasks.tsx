@@ -302,7 +302,15 @@ export default function Tasks() {
 
         <div className="card-bottom-row">
           <div className="card-assignee-group">
-            {task.assigneeName ? (
+            {task.assigneeAvatarUrl ? (
+              <img
+                src={task.assigneeAvatarUrl}
+                alt={task.assigneeName || "Assignee"}
+                className="assignee-bubble"
+                title={task.assigneeName || undefined}
+                style={{ objectFit: "cover", border: "1px solid var(--border)" }}
+              />
+            ) : task.assigneeName ? (
               <div 
                 className="assignee-bubble" 
                 title={task.assigneeName}
