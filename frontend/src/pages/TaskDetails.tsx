@@ -18,6 +18,7 @@ import { fetchProjectMembers, type ProjectMember } from "../api/projects";
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
+import { formatDate, formatDateTime, formatTime, formatRelativeTime } from "../utils/date";
 
 import {
   fetchTaskPullRequests,
@@ -433,7 +434,9 @@ export default function TaskDetails() {
                         </span>
                       )}
                       <span className="text-muted">
-                        {pr.lastSyncedAtUtc ? `Synced ${new Date(pr.lastSyncedAtUtc).toLocaleTimeString()}` : "Not synced"}
+                        {pr.lastSyncedAtUtc && formatTime(pr.lastSyncedAtUtc)
+                          ? `Synced ${formatTime(pr.lastSyncedAtUtc)}${formatRelativeTime(pr.lastSyncedAtUtc) ? ` (${formatRelativeTime(pr.lastSyncedAtUtc)})` : ""}`
+                          : "Not synced"}
                       </span>
                       {pr.syncError && <span className="pr-error-text">⚠️ {pr.syncError}</span>}
 
@@ -545,7 +548,10 @@ export default function TaskDetails() {
                       <div className="timeline-header">
                         <strong>{log.userFullName}</strong>
                         <span className="timeline-action">{log.action}</span>
-                        <span className="timeline-date">{new Date(log.timestampUtc).toLocaleString()}</span>
+                        <span className="timeline-date">
+                          {formatDateTime(log.timestampUtc)}
+                          {formatRelativeTime(log.timestampUtc) ? ` (${formatRelativeTime(log.timestampUtc)})` : ""}
+                        </span>
                       </div>
                       {(log.oldValue || log.newValue) && (
                         <div className="timeline-diff">
@@ -633,14 +639,14 @@ export default function TaskDetails() {
 
             <span className="detail-label">Due Date</span>
             <p className="detail-value" style={{ margin: "4px 0 14px" }}>
-              {task.dueDateUtc ? new Date(task.dueDateUtc).toLocaleDateString() : "None"}
+              {task.dueDateUtc ? formatDate(task.dueDateUtc) : "None"}
             </p>
 
             {task.completedAtUtc && (
               <>
                 <span className="detail-label">Completed Date</span>
                 <p className="detail-value" style={{ margin: "4px 0 0", color: "#15803d" }}>
-                  ✓ {new Date(task.completedAtUtc).toLocaleDateString()}
+                  ✓ {formatDate(task.completedAtUtc)}
                 </p>
               </>
             )}

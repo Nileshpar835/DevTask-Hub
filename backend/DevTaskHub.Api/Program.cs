@@ -26,6 +26,8 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
      {
          options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeJsonConverter());
+         options.JsonSerializerOptions.Converters.Add(new NullableUtcDateTimeJsonConverter());
      });
 builder.Services.AddSwaggerGen(options =>
 {
