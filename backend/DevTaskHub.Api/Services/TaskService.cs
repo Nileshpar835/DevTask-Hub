@@ -347,7 +347,7 @@ public class TaskService : ITaskService
                 a.OldValue,
                 a.NewValue,
                 a.ActorUserId,
-                a.Actor.FullName,
+                a.Actor != null ? a.Actor.FullName : "Unknown",
                 a.CreatedAtUtc
             ))
             .ToListAsync(ct);
@@ -385,7 +385,7 @@ public class TaskService : ITaskService
         }
     }
 
-    private Task LogActivityAsync(
+    private async Task LogActivityAsync(
         int taskId, int projectId, TaskActivityAction action, string? oldValue, string? newValue, int userId, CancellationToken ct)
     {
         var log = new TaskActivityLog
@@ -399,7 +399,7 @@ public class TaskService : ITaskService
             CreatedAtUtc = DateTime.UtcNow
         };
         _db.TaskActivityLogs.Add(log);
-        return Task.CompletedTask;
+        await _db.SaveChangesAsync(ct);
     }
 
     private static TaskDetailDto MapToDetailDto(TaskItem task) =>
