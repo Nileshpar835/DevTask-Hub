@@ -7,6 +7,7 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    public DbSet<Role> Roles => Set<Role>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
@@ -24,6 +25,21 @@ public class AppDbContext : DbContext
 
     private static void ApplyConfigurations(ModelBuilder b)
     {
+        // ---------- Roles ----------
+        b.Entity<Role>(e =>
+        {
+            e.ToTable("Roles");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(50).IsRequired();
+            e.HasIndex(x => x.Name).IsUnique();
+            e.Property(x => x.Description).HasMaxLength(200);
+
+            e.HasData(
+                new Role { Id = Role.AdminId, Name = Role.Admin, Description = "Administrator with full system access", CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Role { Id = Role.DeveloperId, Name = Role.Developer, Description = "Software Developer with project and task access", CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            );
+        });
+
         // ---------- Users ----------
         b.Entity<User>(e =>
         {
@@ -33,8 +49,12 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.Email).IsUnique();
             e.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
             e.Property(x => x.FullName).HasMaxLength(100).IsRequired();
-            e.Property(x => x.Role).HasMaxLength(20).HasConversion<string>().IsRequired();
             e.Property(x => x.IsActive).IsRequired();
+
+            e.HasOne(x => x.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(x => x.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ---------- Projects ----------

@@ -19,7 +19,7 @@ public class DashboardService : IDashboardService
         var totalProjects = await _db.Projects.CountAsync(ct);
         var totalActiveProjects = await _db.Projects.CountAsync(p => p.Status == ProjectStatus.Active, ct);
         var totalUsers = await _db.Users.CountAsync(ct);
-        var totalDevelopers = await _db.Users.CountAsync(u => u.Role == UserRole.Developer, ct);
+        var totalDevelopers = await _db.Users.CountAsync(u => u.RoleId == Role.DeveloperId, ct);
         var totalTasks = await _db.Tasks.CountAsync(ct);
 
         var now = DateTime.UtcNow;

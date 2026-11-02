@@ -18,11 +18,28 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<List<UserSummaryDto>>> GetAll(CancellationToken ct) => 
         Ok(await _users.GetAllAsync(ct));
 
+    [HttpGet("roles")]
+    public async Task<ActionResult<IReadOnlyList<RoleDto>>> GetRoles(CancellationToken ct) =>
+        Ok(await _users.GetRolesAsync(ct));
+
     [HttpPatch("{id:int}/toggle-status")]
     public async Task<ActionResult<UserSummaryDto>> ToggleStatus(int id, CancellationToken ct)
     {
         var updated = await _users.ToggleActiveAsync(id, ct);
         if (updated == null) return NotFound(new { error = "User not found." });
+        return Ok(updated);
+    }
+
+    [HttpPatch("{id:int}/role")]
+    public async Task<ActionResult<UserSummaryDto>> ChangeRole(int id, [FromBody] ChangeUserRoleRequest request, CancellationToken ct)
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(idClaim, out var currentUserId))
+        {
+            throw new UnauthorizedAccessException("Invalid user identity.");
+        }
+
+        var updated = await _users.ChangeRoleAsync(id, request.RoleId, currentUserId, ct);
         return Ok(updated);
     }
 

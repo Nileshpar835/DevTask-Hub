@@ -112,8 +112,8 @@ public class ProjectsController : ControllerBase
             throw new UnauthorizedAccessException("Invalid user identity.");
         }
 
-        var isAdmin = User.IsInRole("Admin") || 
-            User.FindFirstValue(ClaimTypes.Role) == UserRole.Admin.ToString();
+        var isAdmin = User.IsInRole(Role.Admin) || 
+            User.FindFirstValue(ClaimTypes.Role) == Role.Admin;
 
         return (userId, isAdmin);
     }

@@ -30,7 +30,7 @@ public class AuthService : IAuthService
         {
             Email = email,
             FullName = request.FullName.Trim(),
-            Role = UserRole.Developer,
+            RoleId = Role.DeveloperId,
             IsActive = true
         };
         user.PasswordHash = _hasher.HashPassword(user, request.Password);
@@ -45,6 +45,9 @@ public class AuthService : IAuthService
             return AuthResult.Fail("Email is already registered.");
         }
 
+        // Explicitly load Role for token issuing
+        await _db.Entry(user).Reference(u => u.Role).LoadAsync(ct);
+
         return await IssueTokensAsync(user, ct);
     }
 
@@ -52,6 +55,7 @@ public class AuthService : IAuthService
     {
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await _db.Users
+            .Include(u => u.Role)
             .Include(u => u.GitHubAccount)
             .FirstOrDefaultAsync(u => u.Email == email, ct);
 
@@ -75,6 +79,8 @@ public class AuthService : IAuthService
 
         var hash = _tokens.HashRefreshToken(rawRefreshToken);
         var stored = await _db.RefreshTokens
+            .Include(t => t.User)
+                .ThenInclude(u => u.Role)
             .Include(t => t.User)
                 .ThenInclude(u => u.GitHubAccount)
             .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
@@ -135,7 +141,10 @@ public class AuthService : IAuthService
     }
 
     public Task<User?> FindUserByIdAsync(int id, CancellationToken ct) =>
-        _db.Users.Include(u => u.GitHubAccount).FirstOrDefaultAsync(u => u.Id == id, ct);
+        _db.Users
+            .Include(u => u.Role)
+            .Include(u => u.GitHubAccount)
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
 
     private async Task<AuthResult> IssueTokensAsync(User user, CancellationToken ct)
     {
