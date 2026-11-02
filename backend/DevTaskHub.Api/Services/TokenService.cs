@@ -31,7 +31,7 @@ public class TokenService : ITokenService
     {
         new (ClaimTypes.NameIdentifier,user.Id.ToString()),
         new(ClaimTypes.Email,user.Email),
-        new(ClaimTypes.Role, user.Role != null ? user.Role.Name : (user.RoleId == Role.AdminId ? Role.Admin : Role.Developer)),
+        new(ClaimTypes.Role, user.Role != null ? user.Role.Role : Role.Developer),
         new(ClaimTypes.Name,user.FullName),
         new(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
     };

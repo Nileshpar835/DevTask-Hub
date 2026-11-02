@@ -100,7 +100,7 @@ public class ProjectService : IProjectService
             m.UserId,
             m.User.Email,
             m.User.FullName,
-            m.User.Role != null ? m.User.Role.Name : Role.Developer,
+            m.User.Role != null ? m.User.Role.Role : Role.Developer,
             m.AddedAtUtc,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.AvatarUrl : null,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.GitHubUsername : null
@@ -254,7 +254,7 @@ public class ProjectService : IProjectService
             m.UserId,
             m.User.Email,
             m.User.FullName,
-            m.User.Role != null ? m.User.Role.Name : Role.Developer,
+            m.User.Role != null ? m.User.Role.Role : Role.Developer,
             m.AddedAtUtc,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.AvatarUrl : null,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.GitHubUsername : null
@@ -299,7 +299,7 @@ public class ProjectService : IProjectService
             userToAdd.Id,
             userToAdd.Email,
             userToAdd.FullName,
-            userToAdd.Role != null ? userToAdd.Role.Name : Role.Developer,
+            userToAdd.Role != null ? userToAdd.Role.Role : Role.Developer,
             newMember.AddedAtUtc,
             userToAdd.GitHubAccount?.AvatarUrl,
             userToAdd.GitHubAccount?.GitHubUsername

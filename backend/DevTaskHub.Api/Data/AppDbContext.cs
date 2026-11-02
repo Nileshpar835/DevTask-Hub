@@ -7,7 +7,7 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserRole> Roles => Set<UserRole>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
@@ -26,18 +26,19 @@ public class AppDbContext : DbContext
     private static void ApplyConfigurations(ModelBuilder b)
     {
         // ---------- Roles ----------
-        b.Entity<Role>(e =>
+        b.Entity<UserRole>(e =>
         {
             e.ToTable("Roles");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Name).HasMaxLength(50).IsRequired();
-            e.HasIndex(x => x.Name).IsUnique();
-            e.Property(x => x.Description).HasMaxLength(200);
+            e.Property(x => x.UserId).IsRequired();
+            e.Property(x => x.RoleId).IsRequired();
+            e.Property(x => x.Role).HasMaxLength(50).IsRequired();
+            e.HasIndex(x => x.UserId).IsUnique();
 
-            e.HasData(
-                new Role { Id = Role.AdminId, Name = Role.Admin, Description = "Administrator with full system access", CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Role { Id = Role.DeveloperId, Name = Role.Developer, Description = "Software Developer with project and task access", CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
-            );
+            e.HasOne(x => x.User)
+                .WithOne(u => u.Role)
+                .HasForeignKey<UserRole>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ---------- Users ----------
@@ -50,11 +51,6 @@ public class AppDbContext : DbContext
             e.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
             e.Property(x => x.FullName).HasMaxLength(100).IsRequired();
             e.Property(x => x.IsActive).IsRequired();
-
-            e.HasOne(x => x.Role)
-                .WithMany(r => r.Users)
-                .HasForeignKey(x => x.RoleId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ---------- Projects ----------

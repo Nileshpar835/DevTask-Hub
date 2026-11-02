@@ -1,3 +1,7 @@
+using System;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using DevTaskHub.Api.Data;
 using DevTaskHub.Api.Domain;
 using DevTaskHub.Api.Dtos;
@@ -30,7 +34,6 @@ public class AuthService : IAuthService
         {
             Email = email,
             FullName = request.FullName.Trim(),
-            RoleId = Role.DeveloperId,
             IsActive = true
         };
         user.PasswordHash = _hasher.HashPassword(user, request.Password);
@@ -45,8 +48,16 @@ public class AuthService : IAuthService
             return AuthResult.Fail("Email is already registered.");
         }
 
-        // Explicitly load Role for token issuing
-        await _db.Entry(user).Reference(u => u.Role).LoadAsync(ct);
+        var roleAssignment = new UserRole
+        {
+            UserId = user.Id,
+            RoleId = Role.DeveloperId,
+            Role = Role.Developer
+        };
+        _db.Roles.Add(roleAssignment);
+        await _db.SaveChangesAsync(ct);
+
+        user.Role = roleAssignment;
 
         return await IssueTokensAsync(user, ct);
     }

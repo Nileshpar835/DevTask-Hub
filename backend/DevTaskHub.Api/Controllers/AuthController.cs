@@ -17,7 +17,7 @@ public class AuthController : ControllerBase
                     result.User!.Id,
                     result.User.Email,
                     result.User.FullName,
-                    result.User.Role != null ? result.User.Role.Name : (result.User.RoleId == Role.AdminId ? Role.Admin : Role.Developer),
+                    result.User.Role != null ? result.User.Role.Role : Role.Developer,
                     result.User.GitHubAccount?.AvatarUrl,
                     result.User.GitHubAccount?.GitHubUsername
                 ));
@@ -101,7 +101,7 @@ public class AuthController : ControllerBase
             user.Id,
             user.Email,
             user.FullName,
-            user.Role != null ? user.Role.Name : (user.RoleId == Role.AdminId ? Role.Admin : Role.Developer),
+            user.Role != null ? user.Role.Role : Role.Developer,
             user.GitHubAccount?.AvatarUrl,
             user.GitHubAccount?.GitHubUsername
         ));

@@ -13,16 +13,7 @@ public class DbSeeder
         var hasher = services.GetRequiredService<IPasswordHasher<User>>();
         var config = services.GetRequiredService<IConfiguration>();
 
-        if (!await db.Roles.AnyAsync())
-        {
-            db.Roles.AddRange(
-                new Role { Id = Role.AdminId, Name = Role.Admin, Description = "Administrator with full system access", CreatedAtUtc = DateTime.UtcNow },
-                new Role { Id = Role.DeveloperId, Name = Role.Developer, Description = "Software Developer with project and task access", CreatedAtUtc = DateTime.UtcNow }
-            );
-            await db.SaveChangesAsync();
-        }
-
-        if (await db.Users.AnyAsync(u => u.RoleId == Role.AdminId))
+        if (await db.Roles.AnyAsync(r => r.RoleId == Role.AdminId))
             return;
 
         var email = (config["Seed:Admin:Email"] ?? "admin@devtaskhub.local").Trim().ToLowerInvariant();
@@ -34,12 +25,19 @@ public class DbSeeder
         {
             Email = email,
             FullName = fullName,
-            RoleId = Role.AdminId,
             IsActive = true
         };
         admin.PasswordHash = hasher.HashPassword(admin, password);
 
         db.Users.Add(admin);
+        await db.SaveChangesAsync();
+
+        db.Roles.Add(new UserRole
+        {
+            UserId = admin.Id,
+            RoleId = Role.AdminId,
+            Role = Role.Admin
+        });
         await db.SaveChangesAsync();
     }
 }
