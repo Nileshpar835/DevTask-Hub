@@ -1,3 +1,7 @@
+using System;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using DevTaskHub.Api.Data;
 using DevTaskHub.Api.Domain;
 using DevTaskHub.Api.Dtos;
@@ -30,7 +34,6 @@ public class AuthService : IAuthService
         {
             Email = email,
             FullName = request.FullName.Trim(),
-            Role = UserRole.Developer,
             IsActive = true
         };
         user.PasswordHash = _hasher.HashPassword(user, request.Password);
@@ -45,6 +48,17 @@ public class AuthService : IAuthService
             return AuthResult.Fail("Email is already registered.");
         }
 
+        var roleAssignment = new UserRole
+        {
+            UserId = user.Id,
+            RoleId = Role.DeveloperId,
+            Role = Role.Developer
+        };
+        _db.Roles.Add(roleAssignment);
+        await _db.SaveChangesAsync(ct);
+
+        user.Role = roleAssignment;
+
         return await IssueTokensAsync(user, ct);
     }
 
@@ -52,6 +66,7 @@ public class AuthService : IAuthService
     {
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await _db.Users
+            .Include(u => u.Role)
             .Include(u => u.GitHubAccount)
             .FirstOrDefaultAsync(u => u.Email == email, ct);
 
@@ -75,6 +90,8 @@ public class AuthService : IAuthService
 
         var hash = _tokens.HashRefreshToken(rawRefreshToken);
         var stored = await _db.RefreshTokens
+            .Include(t => t.User)
+                .ThenInclude(u => u.Role)
             .Include(t => t.User)
                 .ThenInclude(u => u.GitHubAccount)
             .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
@@ -135,7 +152,10 @@ public class AuthService : IAuthService
     }
 
     public Task<User?> FindUserByIdAsync(int id, CancellationToken ct) =>
-        _db.Users.Include(u => u.GitHubAccount).FirstOrDefaultAsync(u => u.Id == id, ct);
+        _db.Users
+            .Include(u => u.Role)
+            .Include(u => u.GitHubAccount)
+            .FirstOrDefaultAsync(u => u.Id == id, ct);
 
     private async Task<AuthResult> IssueTokensAsync(User user, CancellationToken ct)
     {

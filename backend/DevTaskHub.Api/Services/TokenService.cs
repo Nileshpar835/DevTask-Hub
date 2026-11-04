@@ -25,13 +25,13 @@ public class TokenService : ITokenService
     {
         var keytext = _config["Jwt:key"] ?? throw new InvalidOperationException("Jwt: key missiong from configuration.");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keytext));
-        var expires = DateTime.UtcNow.AddMinutes(15);
+        var expires = DateTime.UtcNow.AddDays(7);
 
         var claims = new List<Claim>
     {
         new (ClaimTypes.NameIdentifier,user.Id.ToString()),
         new(ClaimTypes.Email,user.Email),
-        new(ClaimTypes.Role,user.Role.ToString()),
+        new(ClaimTypes.Role, user.Role != null ? user.Role.Role : Role.Developer),
         new(ClaimTypes.Name,user.FullName),
         new(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
     };

@@ -407,11 +407,6 @@ namespace DevTaskHub.Api.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -421,6 +416,33 @@ namespace DevTaskHub.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("DevTaskHub.Api.Domain.UserRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("DevTaskHub.Api.Domain.GitHubAccount", b =>
@@ -553,6 +575,17 @@ namespace DevTaskHub.Api.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("DevTaskHub.Api.Domain.UserRole", b =>
+                {
+                    b.HasOne("DevTaskHub.Api.Domain.User", "User")
+                        .WithOne("Role")
+                        .HasForeignKey("DevTaskHub.Api.Domain.UserRole", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("DevTaskHub.Api.Domain.Project", b =>
                 {
                     b.Navigation("Members");
@@ -572,6 +605,8 @@ namespace DevTaskHub.Api.Migrations
                     b.Navigation("GitHubAccount");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("Role");
                 });
 #pragma warning restore 612, 618
         }

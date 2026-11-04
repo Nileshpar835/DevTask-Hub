@@ -2,7 +2,7 @@ using System;
 using DevTaskHub.Api.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
+
 namespace DevTaskHub.Api.Data;
 
 public class DbSeeder
@@ -13,7 +13,7 @@ public class DbSeeder
         var hasher = services.GetRequiredService<IPasswordHasher<User>>();
         var config = services.GetRequiredService<IConfiguration>();
 
-        if (await db.Users.AnyAsync(u => u.Role == UserRole.Admin))
+        if (await db.Roles.AnyAsync(r => r.RoleId == Role.AdminId))
             return;
 
         var email = (config["Seed:Admin:Email"] ?? "admin@devtaskhub.local").Trim().ToLowerInvariant();
@@ -25,7 +25,6 @@ public class DbSeeder
         {
             Email = email,
             FullName = fullName,
-            Role = UserRole.Admin,
             IsActive = true
         };
         admin.PasswordHash = hasher.HashPassword(admin, password);
@@ -33,6 +32,12 @@ public class DbSeeder
         db.Users.Add(admin);
         await db.SaveChangesAsync();
 
+        db.Roles.Add(new UserRole
+        {
+            UserId = admin.Id,
+            RoleId = Role.AdminId,
+            Role = Role.Admin
+        });
+        await db.SaveChangesAsync();
     }
-
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
-import { fetchUsers, toggleUserStatus, deleteUser, type UserSummary } from "../api/users";
+import { fetchUsers, fetchRoles, toggleUserStatus, changeUserRole, deleteUser, type UserSummary, type RoleDto } from "../api/users";
 import { useAuth } from "../context/useAuth";
 import { Badge } from "../components/ui/Badge";
 import { Modal } from "../components/ui/Modal";
@@ -24,6 +24,7 @@ function getAvatarColor(name: string): string {
 export default function Users() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserSummary[]>([]);
+  const [roles, setRoles] = useState<RoleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -39,6 +40,12 @@ export default function Users() {
   const [statusError, setStatusError] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState(false);
 
+  // Role Change Modal State
+  const [roleTarget, setRoleTarget] = useState<UserSummary | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState<number>(2);
+  const [roleError, setRoleError] = useState<string | null>(null);
+  const [isChangingRole, setIsChangingRole] = useState(false);
+
   // Delete User Modal State
   const [deleteTarget, setDeleteTarget] = useState<UserSummary | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -47,10 +54,14 @@ export default function Users() {
   useEffect(() => {
     let ignore = false;
 
-    fetchUsers()
-      .then((data) => {
+    Promise.all([
+      fetchUsers(),
+      fetchRoles().catch(() => [] as RoleDto[])
+    ])
+      .then(([usersData, rolesData]) => {
         if (!ignore) {
-          setUsers(data);
+          setUsers(usersData);
+          if (rolesData.length > 0) setRoles(rolesData);
           setError(null);
         }
       })
@@ -98,6 +109,36 @@ export default function Users() {
       }
     } finally {
       setIsToggling(false);
+    }
+  }
+
+  function openRoleModal(u: UserSummary) {
+    setRoleTarget(u);
+    // Find matching roleId from roles or default
+    const matchedRole = roles.find((r) => r.name.toLowerCase() === u.role.toLowerCase());
+    setSelectedRoleId(u.roleId || matchedRole?.id || 2);
+    setRoleError(null);
+  }
+
+  async function handleConfirmChangeRole() {
+    if (!roleTarget) return;
+
+    setIsChangingRole(true);
+    setRoleError(null);
+    try {
+      const updated = await changeUserRole(roleTarget.id, selectedRoleId);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === updated.id ? { ...u, role: updated.role, roleId: updated.roleId } : u))
+      );
+      setRoleTarget(null);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setRoleError(err.response?.data?.error ?? "Failed to update user role.");
+      } else {
+        setRoleError("An unexpected error occurred.");
+      }
+    } finally {
+      setIsChangingRole(false);
     }
   }
 
@@ -183,7 +224,7 @@ export default function Users() {
       <div className="tasks-header-row">
         <div>
           <h2>User Management</h2>
-          <p className="page-subtitle">View and manage system users, roles, and account access permissions.</p>
+          <p className="page-subtitle">View and manage system users, normalized roles, and account access permissions.</p>
         </div>
 
         <div className="tasks-header-actions" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -231,8 +272,16 @@ export default function Users() {
             className="filter-select"
           >
             <option value="All">All Roles</option>
-            <option value="Admin">Admin</option>
-            <option value="Developer">Developer</option>
+            {roles.length > 0 ? (
+              roles.map((r) => (
+                <option key={r.id} value={r.name}>{r.name}</option>
+              ))
+            ) : (
+              <>
+                <option value="Admin">Admin</option>
+                <option value="Developer">Developer</option>
+              </>
+            )}
           </select>
 
           <select
@@ -347,6 +396,17 @@ export default function Users() {
                         <div style={{ display: "inline-flex", gap: "8px", justifyContent: "flex-end", alignItems: "center" }}>
                           <button
                             type="button"
+                            className="btn"
+                            style={{ fontSize: "12px", padding: "4px 10px" }}
+                            disabled={isSelf}
+                            title={isSelf ? "You cannot change your own role" : "Change User Role"}
+                            onClick={() => openRoleModal(u)}
+                          >
+                            Change Role
+                          </button>
+
+                          <button
+                            type="button"
                             className={u.isActive ? "btn-action-delete" : "btn"}
                             style={!u.isActive ? { fontSize: "12px", padding: "4px 10px" } : { fontSize: "13px" }}
                             disabled={isAdminUser || isSelf}
@@ -384,6 +444,57 @@ export default function Users() {
           />
         </>
       )}
+
+      {/* Change Role Confirmation Modal */}
+      <Modal
+        isOpen={!!roleTarget}
+        onClose={() => {
+          if (!isChangingRole) setRoleTarget(null);
+        }}
+        title="Change System Role"
+      >
+        {roleError && <div className="form-error">{roleError}</div>}
+        <p>
+          Assign a normalized role for <strong>{roleTarget?.fullname}</strong> ({roleTarget?.email}):
+        </p>
+        <div className="field" style={{ marginTop: "16px" }}>
+          <label htmlFor="modal-select-role">Select Role</label>
+          <select
+            id="modal-select-role"
+            value={selectedRoleId}
+            onChange={(e) => setSelectedRoleId(Number(e.target.value))}
+            className="filter-select"
+            style={{ width: "100%", padding: "8px 12px", fontSize: "14px" }}
+          >
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} {r.description ? `(${r.description})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "12px" }}>
+          Role definitions and permissions are managed in the normalized <code>Roles</code> table.
+        </p>
+        <div className="modal-actions" style={{ marginTop: "20px" }}>
+          <button
+            type="button"
+            className="btn"
+            disabled={isChangingRole}
+            onClick={() => setRoleTarget(null)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={isChangingRole || roleTarget?.roleId === selectedRoleId}
+            onClick={handleConfirmChangeRole}
+          >
+            {isChangingRole ? "Updating…" : "Update Role"}
+          </button>
+        </div>
+      </Modal>
 
       {/* Change Status Confirmation Modal */}
       <Modal

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using DevTaskHub.Api.Domain;
 using DevTaskHub.Api.Dtos;
 using DevTaskHub.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -10,14 +11,28 @@ namespace DevTaskHub.Api.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private const string RefreshCookieName = "refresh_token";
+    private static AuthResponse BuildAuthResponse(AuthResult result) =>
+            new(result.AccessToken!, result.AccessTokenExpiresAtUtc!.Value,
+                new AuthUserDto(
+                    result.User!.Id,
+                    result.User.Email,
+                    result.User.FullName,
+                    result.User.Role != null ? result.User.Role.Role : Role.Developer,
+                    result.User.GitHubAccount?.AvatarUrl,
+                    result.User.GitHubAccount?.GitHubUsername
+                ));
+
+    private const string RefreshCookieName = "devtaskhub_rt";
     private readonly IAuthService _auth;
 
-    public AuthController(IAuthService auth) => _auth = auth;
+    public AuthController(IAuthService auth)
+    {
+        _auth = auth;
+    }
 
     [HttpPost("register")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register(RegisterRequest request, CancellationToken ct)
     {
         var result = await _auth.RegisterAsync(request, ct);
@@ -86,33 +101,34 @@ public class AuthController : ControllerBase
             user.Id,
             user.Email,
             user.FullName,
-            user.Role.ToString(),
+            user.Role != null ? user.Role.Role : Role.Developer,
             user.GitHubAccount?.AvatarUrl,
             user.GitHubAccount?.GitHubUsername
         ));
     }
 
-    private static AuthResponse BuildAuthResponse(AuthResult result) =>
-        new(result.AccessToken!, result.AccessTokenExpiresAtUtc!.Value,
-            new AuthUserDto(
-                result.User!.Id,
-                result.User.Email,
-                result.User.FullName,
-                result.User.Role.ToString(),
-                result.User.GitHubAccount?.AvatarUrl,
-                result.User.GitHubAccount?.GitHubUsername
-            ));
-
-    private void SetRefreshCookie(string rawToken) =>
+    private void SetRefreshCookie(string rawToken)
+    {
+        var isHttps = Request.IsHttps;
         Response.Cookies.Append(RefreshCookieName, rawToken, new CookieOptions
         {
-            HttpOnly = true,                 // JS cannot read it — XSS can't steal it
-            SameSite = SameSiteMode.None,    // Required for cross-site (Vercel -> DuckDNS)
-            Secure = true,                   // Required when SameSite=None
-            Path = "/api/auth",              // cookie only travels to auth endpoints
+            HttpOnly = true,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Secure = isHttps,
+            Path = "/api/auth",
             Expires = DateTimeOffset.UtcNow.AddDays(14)
         });
+    }
 
-    private void ClearRefreshCookie() =>
-        Response.Cookies.Delete(RefreshCookieName, new CookieOptions { Path = "/api/auth", SameSite = SameSiteMode.None, Secure = true });
+    private void ClearRefreshCookie()
+    {
+        var isHttps = Request.IsHttps;
+        Response.Cookies.Delete(RefreshCookieName, new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Secure = isHttps,
+            Path = "/api/auth"
+        });
+    }
 }

@@ -83,6 +83,9 @@ public class ProjectService : IProjectService
             .Include(p => p.Owner)
             .Include(p => p.Members)
                 .ThenInclude(m => m.User)
+                    .ThenInclude(u => u.Role)
+            .Include(p => p.Members)
+                .ThenInclude(m => m.User)
                     .ThenInclude(u => u.GitHubAccount)
             .FirstOrDefaultAsync(p => p.Id == id, ct)
             ?? throw new KeyNotFoundException($"Project #{id} was not found.");
@@ -97,7 +100,7 @@ public class ProjectService : IProjectService
             m.UserId,
             m.User.Email,
             m.User.FullName,
-            m.User.Role.ToString(),
+            m.User.Role != null ? m.User.Role.Role : Role.Developer,
             m.AddedAtUtc,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.AvatarUrl : null,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.GitHubUsername : null
@@ -234,6 +237,9 @@ public class ProjectService : IProjectService
             .AsNoTracking()
             .Include(p => p.Members)
                 .ThenInclude(m => m.User)
+                    .ThenInclude(u => u.Role)
+            .Include(p => p.Members)
+                .ThenInclude(m => m.User)
                     .ThenInclude(u => u.GitHubAccount)
             .FirstOrDefaultAsync(p => p.Id == projectId, ct)
             ?? throw new KeyNotFoundException($"Project #{projectId} was not found.");
@@ -248,7 +254,7 @@ public class ProjectService : IProjectService
             m.UserId,
             m.User.Email,
             m.User.FullName,
-            m.User.Role.ToString(),
+            m.User.Role != null ? m.User.Role.Role : Role.Developer,
             m.AddedAtUtc,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.AvatarUrl : null,
             m.User.GitHubAccount != null ? m.User.GitHubAccount.GitHubUsername : null
@@ -273,6 +279,7 @@ public class ProjectService : IProjectService
         }
 
         var userToAdd = await _db.Users
+            .Include(u => u.Role)
             .Include(u => u.GitHubAccount)
             .FirstOrDefaultAsync(u => u.Id == userIdToAdd, ct)
             ?? throw new KeyNotFoundException($"User #{userIdToAdd} does not exist.");
@@ -292,7 +299,7 @@ public class ProjectService : IProjectService
             userToAdd.Id,
             userToAdd.Email,
             userToAdd.FullName,
-            userToAdd.Role.ToString(),
+            userToAdd.Role != null ? userToAdd.Role.Role : Role.Developer,
             newMember.AddedAtUtc,
             userToAdd.GitHubAccount?.AvatarUrl,
             userToAdd.GitHubAccount?.GitHubUsername

@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5109/api";
+const defaultApiHost = typeof window !== "undefined" && window.location.hostname ? window.location.hostname : "localhost";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || `http://${defaultApiHost}:5109/api`;
 
 export interface AuthUser {
     id: number;
@@ -16,10 +17,17 @@ export interface AuthResponse {
     accessTokenExpiresAtUtc: string;
     user: AuthUser;
 }
-let accessToken: string | null = null;
+let accessToken: string | null = typeof window !== "undefined" ? localStorage.getItem("devtaskhub_token") : null;
 
 export function setAccessToken(token: string | null): void {
     accessToken = token;
+    if (typeof window !== "undefined") {
+        if (token) {
+            localStorage.setItem("devtaskhub_token", token);
+        } else {
+            localStorage.removeItem("devtaskhub_token");
+        }
+    }
 }
 
 export const api = axios.create({
