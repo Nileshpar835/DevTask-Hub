@@ -107,22 +107,28 @@ public class AuthController : ControllerBase
         ));
     }
 
-    private void SetRefreshCookie(string rawToken) =>
+    private void SetRefreshCookie(string rawToken)
+    {
+        var isHttps = Request.IsHttps;
         Response.Cookies.Append(RefreshCookieName, rawToken, new CookieOptions
         {
             HttpOnly = true,
-            SameSite = SameSiteMode.None,
-            Secure = true,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Secure = isHttps,
             Path = "/api/auth",
             Expires = DateTimeOffset.UtcNow.AddDays(14)
         });
+    }
 
-    private void ClearRefreshCookie() =>
+    private void ClearRefreshCookie()
+    {
+        var isHttps = Request.IsHttps;
         Response.Cookies.Delete(RefreshCookieName, new CookieOptions
         {
             HttpOnly = true,
-            SameSite = SameSiteMode.None,
-            Secure = true,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+            Secure = isHttps,
             Path = "/api/auth"
         });
+    }
 }

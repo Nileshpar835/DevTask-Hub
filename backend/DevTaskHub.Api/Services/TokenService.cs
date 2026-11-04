@@ -25,7 +25,7 @@ public class TokenService : ITokenService
     {
         var keytext = _config["Jwt:key"] ?? throw new InvalidOperationException("Jwt: key missiong from configuration.");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keytext));
-        var expires = DateTime.UtcNow.AddMinutes(15);
+        var expires = DateTime.UtcNow.AddDays(7);
 
         var claims = new List<Claim>
     {

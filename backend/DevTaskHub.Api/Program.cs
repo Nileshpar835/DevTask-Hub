@@ -50,7 +50,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddCors(options =>
     options.AddPolicy("Frontend", policy => policy
         .SetIsOriginAllowed(origin => !string.IsNullOrEmpty(origin) && 
-            (new Uri(origin).Host == "localhost" || new Uri(origin).Host.EndsWith("vercel.app")))
+            (new Uri(origin).Host == "localhost" || new Uri(origin).Host.EndsWith(".local") || new Uri(origin).Host.StartsWith("192.168.") || new Uri(origin).Host.EndsWith("vercel.app")))
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials()

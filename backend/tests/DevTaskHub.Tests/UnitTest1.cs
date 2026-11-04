@@ -1,4 +1,4 @@
-﻿namespace DevTaskHub.Tests;
+namespace DevTaskHub.Tests;
 
 public class UnitTest1
 {
